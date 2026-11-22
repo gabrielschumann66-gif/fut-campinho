@@ -119,8 +119,8 @@ export default function LoginPage() {
           <span className="mut s13">
             {etapa === 'telefone' && 'Entre com o celular cadastrado no grupo'}
             {etapa === 'entrar' && `Fala, ${nome}! Digite seu PIN.`}
-            {etapa === 'criar' && `Bem-vindo, ${nome}! Crie um PIN de 6 números para entrar.`}
-            {etapa === 'sem_convite' && 'Acesso ainda não liberado'}
+            {etapa === 'criar' && `Achamos você, ${nome}! Crie um PIN de 6 números e veja seus números.`}
+            {etapa === 'sem_convite' && 'Celular não encontrado'}
           </span>
         </div>
 
@@ -170,9 +170,9 @@ export default function LoginPage() {
         {etapa === 'sem_convite' && (
           <div className="col gap-12">
             <div className="card col gap-8" style={{ textAlign: 'center' }}>
-              <span className="bold">{nome ? `${nome}, seu acesso ainda não foi liberado.` : 'Este celular não está cadastrado no grupo.'}</span>
+              <span className="bold">{nome ? `${nome}, seu acesso está bloqueado.` : 'Este celular não está cadastrado no grupo.'}</span>
               <span className="s13 mut">
-                O app funciona por convite. Peça para um capitão ou o presidente {nome ? 'liberar seu acesso' : 'cadastrar você'} em Gestão → Elenco.
+                Peça para um capitão ou o presidente {nome ? 'desbloquear seu acesso' : 'cadastrar seu celular'} em Gestão → Jogadores.
               </span>
             </div>
             <button className="btn full" onClick={voltar}>Tentar outro número</button>

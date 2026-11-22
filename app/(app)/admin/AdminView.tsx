@@ -51,12 +51,12 @@ function proximaSegunda() {
 }
 
 const acesso = (j: Perfil) =>
-  j.user_id ? { t: 'Com acesso', c: 'ok' } : j.login_liberado ? { t: 'Convite liberado', c: 'yel' } : { t: 'Sem acesso', c: '' }
+  j.user_id ? { t: 'Já entrou', c: 'ok' } : !j.telefone ? { t: 'Sem celular', c: 'org' } : j.login_liberado ? { t: 'Ainda não entrou', c: 'yel' } : { t: 'Bloqueado', c: '' }
 
 function linkConvite(j: Pick<Perfil, 'nome' | 'apelido' | 'telefone'>) {
   const nome = nomeExibicao(j).split(' ')[0]
   const texto =
-    `Fala, ${nome}! Seu acesso ao app do Fut Campinho está liberado ⚽\n\n` +
+    `Fala, ${nome}! O app do Fut Campinho está no ar e seus números já estão lá ⚽\n\n` +
     `1. Abra ${window.location.origin}\n2. Coloque este celular\n3. Crie um PIN de 6 números\n\n` +
     `Lá tem o ranking, sua carta e seus gols e assistências.`
   return `https://wa.me/${j.telefone}?text=${encodeURIComponent(texto)}`
@@ -123,7 +123,7 @@ export default function AdminView({
     return elenco.filter(
       (j) =>
         (!q || `${j.nome} ${j.apelido ?? ''} ${j.telefone ?? ''}`.toLowerCase().includes(q)) &&
-        (filtro === 'todos' || (filtro === 'com' ? j.user_id || j.login_liberado : !j.user_id && !j.login_liberado)),
+        (filtro === 'todos' || (filtro === 'com' ? !!j.user_id : !j.user_id)),
     )
   }, [elenco, busca, filtro])
 
@@ -132,7 +132,7 @@ export default function AdminView({
   function abrirNovo() {
     setErro(null)
     setOk(null)
-    setForm({ nome: '', apelido: '', telefone: '', papel: 'jogador', mensalista: true, ativo: true, login_liberado: false })
+    setForm({ nome: '', apelido: '', telefone: '', papel: 'jogador', mensalista: true, ativo: true, login_liberado: true })
   }
   function abrirEdicao(j: Perfil) {
     setErro(null)
@@ -154,7 +154,7 @@ export default function AdminView({
     if (!form) return
     const tel = form.telefone ? normalizarTelefone(form.telefone) : null
     if (tel && tel.length < 12) return setErro('Celular incompleto. Use DDD + número.')
-    if (form.login_liberado && !tel) return setErro('Para liberar o acesso, cadastre o celular.')
+    
     const dados = {
       nome: form.nome.trim(),
       apelido: form.apelido.trim() || null,
@@ -176,7 +176,7 @@ export default function AdminView({
 
   async function liberar(j: Perfil) {
     if (!j.telefone) return abrirEdicao(j)
-    await exec(() => supabase().from('profiles').update({ login_liberado: true }).eq('id', j.id), `Acesso de ${nomeExibicao(j)} liberado. Envie o convite.`)
+    await exec(() => supabase().from('profiles').update({ login_liberado: true }).eq('id', j.id), `${nomeExibicao(j)} desbloqueado.`)
   }
 
   async function resetar(id: string, nome: string) {
@@ -212,16 +212,16 @@ export default function AdminView({
             <IconMais size={18} stroke={2.4} /> Cadastrar jogador
           </button>
           <span className="small mut">
-            {nAcesso} de {elenco.length} já entram no app. Para convidar alguém: toque em <b>Liberar</b> e depois em <b>Convidar</b> (abre o
-            WhatsApp com a mensagem pronta).
+            {nAcesso} de {elenco.length} já entraram. Todo jogador com celular cadastrado pode entrar: ele coloca o celular, cria um PIN e já vê
+            os números dele. <b>Avisar</b> abre o WhatsApp com a mensagem pronta.
           </span>
           <input className="input" placeholder="Buscar por nome ou celular" value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Buscar jogador" />
           <div className="chips">
             {(
               [
                 ['todos', 'Todos'],
-                ['com', 'Com convite'],
-                ['sem', 'Sem acesso'],
+                ['com', 'Já entraram'],
+                ['sem', 'Ainda não'],
               ] as const
             ).map(([k, t]) => (
               <button key={k} className={`chip${filtro === k ? ' on' : ''}`} onClick={() => setFiltro(k)} aria-pressed={filtro === k}>
@@ -256,10 +256,10 @@ export default function AdminView({
                   </span>
                 </button>
                 {!j.user_id && !j.login_liberado && (
-                  <button className="btn sm" disabled={ocupado} onClick={() => liberar(j)}>Liberar</button>
+                  <button className="btn sm" disabled={ocupado} onClick={() => liberar(j)}>Desbloquear</button>
                 )}
                 {!j.user_id && j.login_liberado && j.telefone && (
-                  <a className="btn sm yel" href={linkConvite(j)} target="_blank" rel="noreferrer">Convidar</a>
+                  <a className="btn sm yel" href={linkConvite(j)} target="_blank" rel="noreferrer">Avisar</a>
                 )}
               </div>
             )
@@ -448,7 +448,7 @@ export default function AdminView({
             </div>
             <div className="chips">
               <button type="button" className={`chip${form.login_liberado ? ' on' : ''}`} aria-pressed={form.login_liberado} onClick={() => setForm({ ...form, login_liberado: !form.login_liberado })}>
-                {form.login_liberado ? '✓ Acesso liberado' : 'Liberar acesso ao app'}
+                {form.login_liberado ? 'Pode entrar no app' : 'Bloqueado no app'}
               </button>
               <button type="button" className={`chip${form.mensalista ? ' on' : ''}`} aria-pressed={form.mensalista} onClick={() => setForm({ ...form, mensalista: !form.mensalista })}>
                 {form.mensalista ? 'Mensalista' : 'Avulso'}
@@ -472,7 +472,7 @@ export default function AdminView({
                   Acesso: <b>{acesso(editado).t}</b>
                 </span>
                 {!editado.user_id && editado.login_liberado && editado.telefone && (
-                  <a className="btn full" href={linkConvite(editado)} target="_blank" rel="noreferrer">Enviar convite no WhatsApp</a>
+                  <a className="btn full" href={linkConvite(editado)} target="_blank" rel="noreferrer">Avisar no WhatsApp</a>
                 )}
                 {editado.user_id && editado.id !== meuId && (
                   <button type="button" className="btn full" disabled={ocupado} onClick={() => resetar(editado.id, nomeExibicao(editado))}>
