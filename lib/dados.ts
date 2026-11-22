@@ -10,8 +10,8 @@ export const getContexto = cache(async () => {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  const { data: perfil } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (!perfil) redirect('/login')
+  const { data: perfil } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle()
+  if (!perfil) redirect('/login?sair=1')
   return { supabase, user, perfil: perfil as Perfil }
 })
 
@@ -25,6 +25,10 @@ export const getConfig = cache(async () => {
     vagas: number
     valor_mensalidade: number
     dia_vencimento: number
+    duracao_min: number
+    gols_limite: number
+    formato: string
+    max_vitorias: number
   }
 })
 

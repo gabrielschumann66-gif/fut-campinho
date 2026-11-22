@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import ConfirmarPresenca from '@/components/ConfirmarPresenca'
-import { IconEngrenagem, IconLivro, IconSeta } from '@/components/icons'
+import { IconCaixa, IconEngrenagem, IconLivro, IconMais, IconSeta, IconUsuarios } from '@/components/icons'
 import { getConfig, getContexto, temporadaAtual } from '@/lib/dados'
 import {
   PAPEL_LABEL,
@@ -10,6 +10,7 @@ import {
   hhmm,
   iniciais,
   isAdmin,
+  nivelOverall,
   nivelRodada,
   nomeExibicao,
   ordenarRanking,
@@ -48,7 +49,8 @@ export default async function Inicio() {
   const lista = ordenarRanking((ranking ?? []) as Stats[])
   const minhaPos = lista.findIndex((r) => r.jogador_id === perfil.id)
   const eu = minhaPos >= 0 ? lista[minhaPos] : null
-  const aproveitamento = eu && eu.v + eu.e + eu.d > 0 ? Math.round((eu.v / (eu.v + eu.e + eu.d)) * 100) : null
+  const meuOvr = overall(eu && eu.rodadas ? eu.pts / eu.rodadas : 0)
+  const meuNivel = nivelOverall(meuOvr)
   const nivel = craque ? nivelRodada(craque.pts) : null
 
   return (
@@ -64,11 +66,16 @@ export default async function Inicio() {
             </span>
           </div>
         </div>
-        {isAdmin(perfil.papel) && (
-          <Link href="/admin" className="icon-btn" aria-label="Administração">
-            <IconEngrenagem />
+        <div className="row" style={{ gap: 8 }}>
+          {isAdmin(perfil.papel) && (
+            <Link href="/admin" className="icon-btn" aria-label="Gestão do grupo">
+              <IconEngrenagem />
+            </Link>
+          )}
+          <Link href="/perfil" className="avatar" aria-label="Meu perfil" style={{ width: 44, height: 44, background: 'var(--yel)', color: 'var(--bg)', fontSize: 15 }}>
+            {iniciais(nomeExibicao(perfil))}
           </Link>
-        )}
+        </div>
       </header>
 
       <section style={{ background: 'var(--yel)', color: 'var(--bg)', borderRadius: 24, padding: 18 }} className="col gap-12">
@@ -110,7 +117,7 @@ export default async function Inicio() {
             <span className="s13 bold" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>Próxima rodada</span>
             <span className="cond" style={{ fontSize: 32 }}>NENHUMA AGENDADA</span>
             {isAdmin(perfil.papel) && (
-              <Link href="/admin" className="btn dark full">Agendar rodada</Link>
+              <Link href="/partida" className="btn dark full">Começar rodada</Link>
             )}
           </div>
         )}
@@ -138,20 +145,51 @@ export default async function Inicio() {
         </Link>
       )}
 
-      <div className="grid-3">
-        <div className="card tight stat">
-          <span className="cond yel">{aproveitamento === null ? '—' : `${aproveitamento}%`}</span>
-          <span className="small mut">Suas vitórias</span>
+      <Link href="/perfil" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, color: 'var(--txt)', borderColor: 'var(--yel-line)' }}>
+        <div className="row">
+          <div
+            style={{ width: 52, height: 68, borderRadius: 10, background: TIER[meuNivel].bg, color: TIER[meuNivel].fg, flexShrink: 0 }}
+            className="col"
+          >
+            <div className="col" style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <span className="cond" style={{ fontSize: 24 }}>{meuOvr}</span>
+              <span style={{ fontSize: 9, fontWeight: 700 }}>{perfil.posicao}</span>
+            </div>
+          </div>
+          <div className="col flex-1 gap-4">
+            <span className="kicker">Meu perfil</span>
+            <span className="cond ellipsis" style={{ fontSize: 24 }}>{nomeExibicao(perfil).toUpperCase()}</span>
+            <span className="s13 mut">Carta, gráficos e seus lances</span>
+          </div>
+          <span className="yel"><IconSeta /></span>
         </div>
-        <div className="card tight stat">
-          <span className="cond">{eu?.gols ?? 0}</span>
-          <span className="small mut">Gols na temp.</span>
+        <div className="grid-4 center">
+          <div className="col"><span className="cond org" style={{ fontSize: 24 }}>{minhaPos >= 0 ? `${minhaPos + 1}º` : '—'}</span><span className="small mut">ranking</span></div>
+          <div className="col"><span className="cond yel" style={{ fontSize: 24 }}>{eu?.pts ?? 0}</span><span className="small mut">pontos</span></div>
+          <div className="col"><span className="cond" style={{ fontSize: 24 }}>{eu?.gols ?? 0}</span><span className="small mut">gols</span></div>
+          <div className="col"><span className="cond" style={{ fontSize: 24 }}>{eu?.assist ?? 0}</span><span className="small mut">assist.</span></div>
         </div>
-        <div className="card tight stat">
-          <span className="cond org">{minhaPos >= 0 ? `${minhaPos + 1}º` : '—'}</span>
-          <span className="small mut">No ranking</span>
-        </div>
-      </div>
+      </Link>
+
+      {isAdmin(perfil.papel) && (
+        <section className="col gap-8">
+          <h2 className="h2">GESTÃO</h2>
+          <div className="grid-3">
+            <Link href="/partida/nova" className="card tight col gap-4" style={{ color: 'var(--txt)', background: 'var(--org)', borderColor: 'var(--org)' }}>
+              <span style={{ color: 'var(--bg)' }}><IconMais size={22} /></span>
+              <span className="bold s13" style={{ color: 'var(--bg)' }}>Registrar jogo</span>
+            </Link>
+            <Link href="/admin?aba=elenco" className="card tight col gap-4" style={{ color: 'var(--txt)' }}>
+              <span className="yel"><IconUsuarios size={22} /></span>
+              <span className="bold s13">Jogadores</span>
+            </Link>
+            <Link href="/admin?aba=rodadas" className="card tight col gap-4" style={{ color: 'var(--txt)' }}>
+              <span className="yel"><IconEngrenagem size={22} /></span>
+              <span className="bold s13">Rodadas</span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       <section className="col gap-10">
         <div className="between">
@@ -172,11 +210,18 @@ export default async function Inicio() {
         ))}
       </section>
 
-      <Link href="/regras" className="item" style={{ padding: 14 }}>
-        <span className="yel"><IconLivro /></span>
-        <span className="flex-1" style={{ fontWeight: 600 }}>Regras do Campinho</span>
-        <span className="mut"><IconSeta /></span>
-      </Link>
+      <div className="col gap-8">
+        <Link href="/regras" className="atalho">
+          <span className="yel"><IconLivro /></span>
+          <span className="flex-1" style={{ fontWeight: 600 }}>Regras do Campinho</span>
+          <span className="mut"><IconSeta /></span>
+        </Link>
+        <Link href="/caixa" className="atalho">
+          <span className="yel"><IconCaixa size={20} /></span>
+          <span className="flex-1" style={{ fontWeight: 600 }}>Caixa e mensalidade</span>
+          <span className="mut"><IconSeta /></span>
+        </Link>
+      </div>
     </main>
   )
 }

@@ -138,7 +138,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/escudo.svg" alt="" width={44} height={37} style={{ objectFit: 'contain' }} />
           <div className="col">
-            <span className="cond" style={{ fontSize: 22 }}>{souEu ? 'MEU PERFIL' : nome.toUpperCase()}</span>
+            <span className="cond" style={{ fontSize: 22 }}>{souEu ? `MEU PERFIL · ${nome.toUpperCase()}` : nome.toUpperCase()}</span>
             <span className="s13 mut">Temporada {temporada} · {n} rodadas</span>
           </div>
         </div>
@@ -201,6 +201,27 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
           <span className="small mut">craque da rodada</span>
           {titulos?.[0] && <span className="small mut" style={{ fontWeight: 600 }}>último: R{titulos[0].numero}</span>}
         </div>
+      </div>
+
+      <div className="card col gap-10">
+        <div className="between">
+          <h2 className="h2">NA TEMPORADA</h2>
+          <span className="small mut">{jogos} {jogos === 1 ? 'jogo' : 'jogos'} com time registrado</span>
+        </div>
+        <div className="grid-4 center">
+          {[
+            ['Gols', st?.gols ?? 0, 'yel'],
+            ['Assist.', st?.assist ?? 0, 'yel'],
+            ['Vitórias', st?.v ?? 0, ''],
+            ['Derrotas', st?.d ?? 0, 'mut'],
+          ].map(([k, v, c]) => (
+            <div key={k as string} className="col" style={{ background: 'var(--bg)', borderRadius: 14, padding: '10px 0' }}>
+              <span className={`cond ${c}`} style={{ fontSize: 30 }}>{v}</span>
+              <span className="small mut">{k}</span>
+            </div>
+          ))}
+        </div>
+        <span className="small mut">Participação em gols: <b style={{ color: 'var(--txt)' }}>{(st?.gols ?? 0) + (st?.assist ?? 0)}</b> (gols + assistências)</span>
       </div>
 
       <Desempenho

@@ -2,23 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { IconCaixa, IconEstrela, IconInicio, IconMais, IconPessoa, IconTrofeu } from './icons'
+import { IconBola, IconEstrela, IconInicio, IconMais, IconPessoa, IconTrofeu } from './icons'
 
 const ITENS = [
   { href: '/', label: 'Início', Icon: IconInicio },
   { href: '/ranking', label: 'Ranking', Icon: IconTrofeu },
+  { href: '/partida', label: 'Jogos', Icon: IconBola },
   { href: '/craque', label: 'Craque', Icon: IconEstrela },
-  { href: '/caixa', label: 'Caixa', Icon: IconCaixa },
-  { href: '/perfil', label: 'Perfil', Icon: IconPessoa },
+  { href: '/perfil', label: 'Meu perfil', Icon: IconPessoa },
 ]
 
-export default function BottomNav() {
+export default function BottomNav({ admin }: { admin: boolean }) {
   const path = usePathname()
   return (
     <nav className="nav" aria-label="Navegação principal">
       <div className="nav-pill">
         {ITENS.map(({ href, label, Icon }) => {
-          const on = href === '/' ? path === '/' : path.startsWith(href)
+          const on =
+            href === '/' ? path === '/' : href === '/perfil' ? path === '/perfil' : href === '/partida' ? path.startsWith('/partida') && !path.startsWith('/partida/nova') : path.startsWith(href)
           return (
             <Link key={href} href={href} className={on ? 'on' : undefined} aria-current={on ? 'page' : undefined}>
               <Icon />
@@ -27,9 +28,11 @@ export default function BottomNav() {
           )
         })}
       </div>
-      <Link href="/partida" className="fab" aria-label="Partida ao vivo">
-        <IconMais />
-      </Link>
+      {admin && (
+        <Link href="/partida/nova" className="fab" aria-label="Registrar jogo">
+          <IconMais />
+        </Link>
+      )}
     </nav>
   )
 }

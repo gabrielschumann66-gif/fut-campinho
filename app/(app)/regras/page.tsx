@@ -34,25 +34,30 @@ export default async function Regras() {
       </div>
 
       <section className="col gap-10">
-        <span className="kicker">O grupo em números</span>
+        <span className="kicker">O jogo em 4 números</span>
         <div className="grid-2">
           <div style={{ background: 'var(--yel)', color: 'var(--bg)', borderRadius: 20, padding: 14 }} className="col gap-4">
-            <span className="cond" style={{ fontSize: 46, lineHeight: 0.95 }}>{config.vagas}</span>
-            <span className="s13" style={{ fontWeight: 600 }}>vagas por rodada</span>
+            <span className="cond" style={{ fontSize: 46, lineHeight: 0.95 }}>{config.duracao_min} MIN</span>
+            <span className="s13" style={{ fontWeight: 600 }}>
+              {config.gols_limite ? `ou ${config.gols_limite} ${config.gols_limite === 1 ? 'gol' : 'gols'}, o que vier primeiro` : 'por jogo'}
+            </span>
           </div>
           <div className="card col gap-4" style={{ borderRadius: 20, padding: 14 }}>
-            <span className="cond" style={{ fontSize: 46, lineHeight: 0.95 }}>{config.horario_padrao.slice(0, 5).replace(':', 'H')}</span>
-            <span className="s13 mut">horário padrão</span>
+            <span className="cond" style={{ fontSize: 46, lineHeight: 0.95 }}>{config.formato}</span>
+            <span className="s13 mut">linha + goleiro</span>
           </div>
           <div className="card col gap-4" style={{ borderRadius: 20, padding: 14 }}>
-            <span className="cond org" style={{ fontSize: 46, lineHeight: 0.95 }}>R$ {brl(Number(config.valor_mensalidade))}</span>
-            <span className="s13 mut">mensalidade</span>
+            <span className="cond org" style={{ fontSize: 46, lineHeight: 0.95 }}>{config.max_vitorias}×</span>
+            <span className="s13 mut">máx. de vitórias seguidas em campo</span>
           </div>
           <div className="card col gap-4" style={{ borderRadius: 20, padding: 14 }}>
             <span className="cond" style={{ fontSize: 46, lineHeight: 0.95 }}>DIA {config.dia_vencimento}</span>
-            <span className="s13 mut">prazo da mensalidade</span>
+            <span className="s13 mut">prazo da mensalidade (R$ {brl(Number(config.valor_mensalidade))})</span>
           </div>
         </div>
+        {isAdmin(perfil.papel) && (
+          <Link href="/admin?aba=config" className="small" style={{ fontWeight: 600, alignSelf: 'flex-end' }}>Editar estes números</Link>
+        )}
       </section>
 
       <section className="card col gap-12">

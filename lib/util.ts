@@ -9,6 +9,9 @@ export type Perfil = {
   papel: Papel
   mensalista: boolean
   ativo: boolean
+  telefone: string | null
+  login_liberado: boolean
+  user_id: string | null
 }
 
 export type Stats = {
@@ -102,3 +105,30 @@ export const hojeISO = () => {
 
 export const erroMsg = (e: unknown) =>
   e && typeof e === 'object' && 'message' in e ? String((e as { message: string }).message) : 'Algo deu errado.'
+
+/** Só dígitos, com 55 na frente (igual ao banco). */
+export const normalizarTelefone = (t: string) => {
+  const d = t.replace(/\D/g, '')
+  return d.length === 10 || d.length === 11 ? `55${d}` : d
+}
+
+/** (21) 98765-4321 */
+export const formatarTelefone = (t?: string | null) => {
+  if (!t) return ''
+  const d = t.replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '')
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+  return t
+}
+
+/** Máscara enquanto digita */
+export const mascaraTelefone = (v: string) => {
+  const d = v.replace(/\D/g, '').slice(0, 11)
+  if (d.length <= 2) return d.length ? `(${d}` : ''
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+}
+
+/** A conta de login usa um e-mail interno derivado do telefone (ninguém precisa saber dele). */
+export const emailDoTelefone = (t: string) => `${normalizarTelefone(t)}@fut.gabrielschumann.com.br`

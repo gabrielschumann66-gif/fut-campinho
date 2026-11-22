@@ -85,3 +85,22 @@ export const IconLixo = ({ size = 16, stroke = 2 }: P) => (
     <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
   </svg>
 )
+export const IconBola = ({ size = 18, stroke = 2 }: P) => (
+  <svg {...base(size, stroke)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m12 7 4 3-1.5 4.5h-5L8 10Z" />
+    <path d="M12 3v4M21 10.5 16 10M17.5 19.5l-3-5M6.5 19.5l3-5M3 10.5l5-.5" />
+  </svg>
+)
+export const IconUsuarios = ({ size = 18, stroke = 2 }: P) => (
+  <svg {...base(size, stroke)}>
+    <circle cx="9" cy="8" r="4" />
+    <path d="M2 21a7 7 0 0 1 14 0" />
+    <path d="M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3" />
+  </svg>
+)
+export const IconTroca = ({ size = 16, stroke = 2 }: P) => (
+  <svg {...base(size, stroke)}>
+    <path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />
+  </svg>
+)

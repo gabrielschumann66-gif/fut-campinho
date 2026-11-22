@@ -5,24 +5,26 @@ import { fmt1 } from '@/lib/util'
 
 type Serie = { label: string; v: number[]; media: number; un: string }
 
+/** Barras por rodada (funciona desde a primeira rodada) com a média da temporada tracejada. */
 export default function Desempenho({ labels, series }: { labels: string[]; series: Record<'pts' | 'gols' | 'ast', Serie> }) {
   const [k, setK] = useState<keyof typeof series>('pts')
   const s = series[k]
   const W = 324
-  const H = 140
-  const top = 10
-  const max = Math.max(...s.v, s.media, 1) * 1.15
+  const H = 150
+  const top = 22
+  const max = Math.max(...s.v, s.media, 1) * 1.1
   const y = (v: number) => Math.round(H - (v / max) * (H - top))
-  const pts = s.v.map((v, i) => [s.v.length > 1 ? Math.round(i * (W / (s.v.length - 1))) : W / 2, y(v)] as const)
-  const linha = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ')
-  const ult = pts[pts.length - 1]
+  const n = Math.max(labels.length, 1)
+  const slot = W / Math.max(n, 4)
+  const bw = Math.min(44, slot * 0.6)
+  const x0 = (W - slot * n) / 2
 
   return (
     <div className="card col gap-12">
       <div className="between" style={{ alignItems: 'flex-end' }}>
         <div className="col">
           <h2 className="h2">DESEMPENHO</h2>
-          <span className="small mut">Últimas {labels.length} rodadas</span>
+          <span className="small mut">{labels.length === 1 ? 'Primeira rodada' : `Últimas ${labels.length} rodadas`}</span>
         </div>
         <div className="col" style={{ alignItems: 'flex-end' }}>
           <span className="cond yel" style={{ fontSize: 26 }}>{fmt1(s.media)} {s.un}</span>
@@ -40,24 +42,27 @@ export default function Desempenho({ labels, series }: { labels: string[]; serie
         <div className="vazio">Jogue uma rodada para ver o gráfico.</div>
       ) : (
         <>
-          <svg viewBox={`0 0 ${W} 150`} width="100%" role="img" aria-label={`Gráfico de ${s.label} nas últimas ${labels.length} rodadas`} style={{ display: 'block', overflow: 'visible' }}>
-            <defs>
-              <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FDE819" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="#FDE819" stopOpacity="0" />
-              </linearGradient>
-            </defs>
+          <svg
+            viewBox={`0 0 ${W} ${H + 20}`}
+            width="100%"
+            role="img"
+            aria-label={`${s.label} por rodada: ${labels.map((l, i) => `${l} ${s.v[i]}`).join(', ')}`}
+            style={{ display: 'block', overflow: 'visible' }}
+          >
             <line x1="0" y1={H} x2={W} y2={H} stroke="#2A2A27" />
+            {s.v.map((v, i) => {
+              const cx = x0 + slot * i + slot / 2
+              const ult = i === s.v.length - 1
+              return (
+                <g key={labels[i]}>
+                  <rect x={cx - bw / 2} y={y(v)} width={bw} height={Math.max(H - y(v), v ? 3 : 0)} rx="6" fill={ult ? '#FDE819' : '#6B6A2A'} />
+                  <text x={cx} y={y(v) - 6} textAnchor="middle" fontSize="13" fontWeight="700" fill={ult ? '#FDE819' : '#F5F5F0'}>{v}</text>
+                  <text x={cx} y={H + 16} textAnchor="middle" fontSize="11" fill={ult ? '#FDE819' : '#A3A39B'} fontWeight={ult ? 700 : 400}>{labels[i]}</text>
+                </g>
+              )
+            })}
             <line x1="0" y1={y(s.media)} x2={W} y2={y(s.media)} stroke="#FD6201" strokeWidth="1.5" strokeDasharray="4 5" />
-            {pts.length > 1 && <path d={`${linha} L${W} ${H} L0 ${H} Z`} fill="url(#area)" />}
-            <path d={linha} fill="none" stroke="#FDE819" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
-            {ult && <circle cx={ult[0]} cy={ult[1]} r="6" fill="#0B0B0A" stroke="#FDE819" strokeWidth="3" />}
           </svg>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${labels.length}, minmax(0, 1fr))`, fontSize: 11, textAlign: 'center', marginTop: -6 }} className="mut">
-            {labels.map((l, i) => (
-              <span key={l} style={i === labels.length - 1 ? { color: 'var(--yel)', fontWeight: 700 } : undefined}>{l}</span>
-            ))}
-          </div>
           <div className="row small mut" style={{ gap: 8 }}>
             <span style={{ width: 16, borderTop: '2px dashed var(--org)' }} />
             Média na temporada

@@ -83,8 +83,17 @@ export default function EditarPerfil({ perfil, abrirSenha }: { perfil: Perfil; a
               </div>
             </div>
             <label className="field">
-              Nova senha (opcional)
-              <input className="input" type="password" minLength={6} value={senha} onChange={(e) => setSenha(e.target.value)} autoComplete="new-password" />
+              Trocar PIN (opcional, 6 números)
+              <input
+                className="input pin"
+                type="password"
+                inputMode="numeric"
+                minLength={6}
+                maxLength={6}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                autoComplete="new-password"
+              />
             </label>
             {msg && <span className={msg.ok ? 'ok' : 'erro'}>{msg.t}</span>}
             <button className="btn yel full" disabled={salvando}>{salvando ? 'Salvando…' : 'Salvar'}</button>

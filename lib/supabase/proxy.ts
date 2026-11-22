@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
     url.search = ''
     return NextResponse.redirect(url)
   }
-  if (logado && publica) {
+  if (logado && publica && !request.nextUrl.searchParams.has('sair')) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     url.search = ''
