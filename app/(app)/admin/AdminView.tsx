@@ -3,6 +3,10 @@
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { IconLixo, IconMais } from '@/components/icons'
+import { configAtualizada } from '@/app/acoes'
+import Avatar from '@/components/Avatar'
+import { DIAS_SEMANA } from '@/lib/config'
+import { linkConvite } from '@/lib/convite'
 import { createClient } from '@/lib/supabase/client'
 import {
   PAPEL_LABEL,
@@ -19,6 +23,8 @@ import {
 } from '@/lib/util'
 
 type Config = {
+  nome_grupo: string
+  dia_semana: number
   local_padrao: string
   horario_padrao: string
   vagas: number
@@ -53,14 +59,7 @@ function proximaSegunda() {
 const acesso = (j: Perfil) =>
   j.user_id ? { t: 'Já entrou', c: 'ok' } : !j.telefone ? { t: 'Sem celular', c: 'org' } : j.login_liberado ? { t: 'Ainda não entrou', c: 'yel' } : { t: 'Bloqueado', c: '' }
 
-function linkConvite(j: Pick<Perfil, 'nome' | 'apelido' | 'telefone'>) {
-  const nome = nomeExibicao(j).split(' ')[0]
-  const texto =
-    `Fala, ${nome}! O app do Fut Campinho está no ar e seus números já estão lá ⚽\n\n` +
-    `1. Abra ${window.location.origin}\n2. Coloque este celular\n3. Crie um PIN de 6 números\n\n` +
-    `Lá tem o ranking, sua carta e seus gols e assistências.`
-  return `https://wa.me/${j.telefone}?text=${encodeURIComponent(texto)}`
-}
+const convite = (j: Pick<Perfil, 'nome' | 'apelido' | 'telefone'>, grupo: string) => linkConvite(j, grupo, window.location.origin)
 
 export default function AdminView({
   abaInicial,
@@ -193,6 +192,16 @@ export default function AdminView({
   }
 
   const editado = form?.id ? elenco.find((j) => j.id === form.id) : undefined
+  const nCapitaes = elenco.filter((j) => j.papel === 'capitao').length
+
+  async function passarPresidencia(id: string, nome: string) {
+    if (!confirm(`Passar a presidência para ${nome}? Você vira jogador e perde o acesso de presidente.`)) return
+    const feito = await exec(() => supabase().rpc('passar_presidencia', { p_novo: id }), `${nome} agora é o presidente.`)
+    if (feito) {
+      setForm(null)
+      router.replace('/')
+    }
+  }
 
   return (
     <>
@@ -241,7 +250,7 @@ export default function AdminView({
                   style={{ border: 'none', background: 'transparent', color: 'var(--txt)', padding: 0, textAlign: 'left', minWidth: 0 }}
                   aria-label={`Editar ${nomeExibicao(j)}`}
                 >
-                  <span className="avatar">{nomeExibicao(j).slice(0, 2).toUpperCase()}</span>
+                  <Avatar id={j.avatar} nome={nomeExibicao(j)} size={40} />
                   <span className="col flex-1" style={{ minWidth: 0, gap: 3 }}>
                     <span className="bold ellipsis">
                       {nomeExibicao(j)}
@@ -259,7 +268,7 @@ export default function AdminView({
                   <button className="btn sm" disabled={ocupado} onClick={() => liberar(j)}>Desbloquear</button>
                 )}
                 {!j.user_id && j.login_liberado && j.telefone && (
-                  <a className="btn sm yel" href={linkConvite(j)} target="_blank" rel="noreferrer">Avisar</a>
+                  <a className="btn sm yel" href={convite(j, config.nome_grupo)} target="_blank" rel="noreferrer">Avisar</a>
                 )}
               </div>
             )
@@ -270,8 +279,8 @@ export default function AdminView({
       {aba === 'rodadas' && (
         <>
           <span className="small mut">
-            No dia do jogo, não precisa agendar: em <b>Jogos</b> é só tocar em “Começar a rodada de hoje”. Agende aqui só se quiser abrir a
-            confirmação de presença antes.
+            A rodada da semana é criada sozinha ({DIAS_SEMANA[config.dia_semana].toLowerCase()} às {config.horario_padrao.slice(0, 5).replace(':', 'h')})
+            e começa no horário. O fim é com vocês: em <b>Jogos</b>, toque em “Encerrar rodada”. Agende aqui só uma rodada extra.
           </span>
           <form
             className="card col gap-12"
@@ -348,10 +357,13 @@ export default function AdminView({
                     gols_limite: Number(cfg.gols_limite),
                     formato: cfg.formato.trim() || '5×5',
                     max_vitorias: Number(cfg.max_vitorias),
+                    dia_semana: Number(cfg.dia_semana),
                   })
                   .eq('id', 1),
               'Configurações salvas.',
-            )
+            ).then((feito) => {
+              if (feito) configAtualizada()
+            })
           }}
         >
           <h2 className="h2">O JOGO EM NÚMEROS</h2>
@@ -375,6 +387,22 @@ export default function AdminView({
             </label>
           </div>
           <h2 className="h2" style={{ marginTop: 8 }}>GRUPO</h2>
+          {souPresidente && (
+            <a href="/configurar" className="atalho">
+              <span className="flex-1 bold">Nome, escudo, coletes e cargos</span>
+              <span className="yel">Abrir</span>
+            </a>
+          )}
+          <div className="field">
+            Dia do jogo (a rodada é criada sozinha)
+            <div className="chips">
+              {DIAS_SEMANA.map((d, n) => (
+                <button type="button" key={d} className={`chip${cfg.dia_semana === n ? ' on' : ''}`} aria-pressed={cfg.dia_semana === n} onClick={() => setCfg({ ...cfg, dia_semana: n })}>
+                  {d}
+                </button>
+              ))}
+            </div>
+          </div>
           <label className="field">
             Local padrão
             <input className="input" value={cfg.local_padrao} onChange={(e) => setCfg({ ...cfg, local_padrao: e.target.value })} required />
@@ -429,22 +457,36 @@ export default function AdminView({
             </label>
             <div className="field">
               Cargo
-              <div className="chips">
-                {(Object.keys(PAPEL_LABEL) as Papel[])
-                  .filter((p) => p !== 'presidente' || souPresidente || form.papel === 'presidente')
-                  .map((p) => (
-                    <button
-                      type="button"
-                      key={p}
-                      className={`chip${form.papel === p ? ' on' : ''}`}
-                      disabled={form.papel === 'presidente' && !souPresidente}
-                      onClick={() => setForm({ ...form, papel: p })}
-                      aria-pressed={form.papel === p}
-                    >
-                      {PAPEL_LABEL[p]}
-                    </button>
-                  ))}
-              </div>
+              {form.papel === 'presidente' ? (
+                <span className="s13" style={{ color: 'var(--txt)' }}>
+                  <span className="badge yel">Presidente</span> · só muda com “Passar a presidência”.
+                </span>
+              ) : (
+                <>
+                  <div className="chips">
+                    {(['jogador', 'capitao', 'financeiro'] as Papel[]).map((p) => {
+                      const eraCapitao = editado?.papel === 'capitao'
+                      const semVaga = p === 'capitao' && !eraCapitao && nCapitaes >= 2
+                      const bloqueado = (p === 'capitao' || eraCapitao) && !souPresidente
+                      return (
+                        <button
+                          type="button"
+                          key={p}
+                          className={`chip${form.papel === p ? ' on' : ''}`}
+                          disabled={(form.papel !== p && (semVaga || bloqueado)) || (eraCapitao && !souPresidente)}
+                          onClick={() => setForm({ ...form, papel: p })}
+                          aria-pressed={form.papel === p}
+                        >
+                          {PAPEL_LABEL[p]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <span className="small mut">
+                    {nCapitaes}/2 capitães.{souPresidente ? '' : ' Só o presidente nomeia ou tira capitães.'}
+                  </span>
+                </>
+              )}
             </div>
             <div className="chips">
               <button type="button" className={`chip${form.login_liberado ? ' on' : ''}`} aria-pressed={form.login_liberado} onClick={() => setForm({ ...form, login_liberado: !form.login_liberado })}>
@@ -472,11 +514,16 @@ export default function AdminView({
                   Acesso: <b>{acesso(editado).t}</b>
                 </span>
                 {!editado.user_id && editado.login_liberado && editado.telefone && (
-                  <a className="btn full" href={linkConvite(editado)} target="_blank" rel="noreferrer">Avisar no WhatsApp</a>
+                  <a className="btn full" href={convite(editado, config.nome_grupo)} target="_blank" rel="noreferrer">Avisar no WhatsApp</a>
                 )}
                 {editado.user_id && editado.id !== meuId && (
                   <button type="button" className="btn full" disabled={ocupado} onClick={() => resetar(editado.id, nomeExibicao(editado))}>
                     Resetar acesso (esqueceu o PIN)
+                  </button>
+                )}
+                {souPresidente && editado.id !== meuId && editado.ativo && (
+                  <button type="button" className="btn full" disabled={ocupado} onClick={() => passarPresidencia(editado.id, nomeExibicao(editado))}>
+                    Passar a presidência para {nomeExibicao(editado).split(' ')[0]}
                   </button>
                 )}
                 {editado.id !== meuId && !editado.user_id && (

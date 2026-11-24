@@ -1,12 +1,12 @@
 import Link from 'next/link'
+import TabelaPontos from '@/components/TabelaPontos'
 import { IconVoltar } from '@/components/icons'
 import { getConfig, getContexto } from '@/lib/dados'
 import { PAPEL_LABEL, brl, isAdmin, nomeExibicao, type Perfil } from '@/lib/util'
 import RegrasView, { type Regra } from './RegrasView'
 
 export default async function Regras() {
-  const { supabase, perfil } = await getContexto()
-  const config = await getConfig()
+  const [{ supabase, perfil }, config] = await Promise.all([getContexto(), getConfig()])
   const { data } = await supabase
     .from('regras')
     .select('*, autor:profiles!regras_atualizado_por_fkey(nome, apelido, papel)')
@@ -24,7 +24,7 @@ export default async function Regras() {
           <IconVoltar />
         </Link>
         <div className="col flex-1">
-          <h1 className="title" style={{ fontSize: 30 }}>REGRAS DO CAMPINHO</h1>
+          <h1 className="title" style={{ fontSize: 30 }}>REGRAS DO {config.nome_grupo.toUpperCase()}</h1>
           {ultima && (
             <span className="small mut">
               Atualizado{ultima.autor ? ` por ${nomeExibicao(ultima.autor)} (${PAPEL_LABEL[ultima.autor.papel]})` : ''} · {quando}
@@ -65,24 +65,7 @@ export default async function Regras() {
           <h2 className="h2">COMO VOCÊ PONTUA</h2>
           <Link href="/ranking" className="s13" style={{ fontWeight: 600 }}>Ver ranking</Link>
         </div>
-        <div className="grid-4 center">
-          {[
-            ['+3', 'Vitória'],
-            ['+1', 'Empate'],
-            ['+2', 'Gol'],
-            ['+1', 'Assist.'],
-          ].map(([v, k]) => (
-            <div key={k} className="col" style={{ background: 'var(--bg)', borderRadius: 14, padding: '10px 0' }}>
-              <span className="cond yel" style={{ fontSize: 26 }}>{v}</span>
-              <span className="small mut">{k}</span>
-            </div>
-          ))}
-        </div>
-        <div className="row" style={{ gap: 6 }}>
-          <div style={{ flex: 1, height: 34, borderRadius: 10, background: 'linear-gradient(160deg, #F2C49B, #C9834A 45%, #7A4A22)', color: '#1C0F05', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>Bronze · até 8</div>
-          <div style={{ flex: 1, height: 34, borderRadius: 10, background: 'linear-gradient(160deg, #F4F6F8, #C9CED6 45%, #8A9099)', color: '#15181C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>Prata · 9–14</div>
-          <div style={{ flex: 1, height: 34, borderRadius: 10, background: 'linear-gradient(160deg, #FFF6A0, #FDE819 40%, #C99A00)', color: '#1A1400', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>Ouro · 15+</div>
-        </div>
+        <TabelaPontos />
         <span className="small mut">Pontos na rodada definem o nível da carta do craque.</span>
       </section>
 
@@ -90,7 +73,7 @@ export default async function Regras() {
 
       <div className="item" style={{ padding: 14, borderRadius: 18 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/escudo.svg" alt="" width={44} height={37} style={{ objectFit: 'contain' }} />
+        <img src={config.logo_url || '/escudo.svg'} alt="" width={48} height={48} style={{ objectFit: 'contain' }} />
         <span className="flex-1 s13 mut">Ficou alguma dúvida ou discordância? A palavra final é do capitão em campo.</span>
       </div>
     </main>

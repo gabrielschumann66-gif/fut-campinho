@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CORES_TIME, corHex, erroMsg } from '@/lib/util'
+import { corHex, erroMsg } from '@/lib/util'
 
 type Jog = { id: string; nome: string; confirmado: boolean }
 type Lado = 'A' | 'B'
@@ -13,14 +13,16 @@ export default function NovaPartida({
   proximoNumero,
   jogadores,
   vencedor,
+  coletes,
 }: {
+  coletes: string[]
   rodadaId: number
   proximoNumero: number
   jogadores: Jog[]
   vencedor: { cor: string; ids: string[] } | null
 }) {
   const router = useRouter()
-  const [cor, setCor] = useState<Record<Lado, string>>({ A: 'Laranja', B: 'Branco' })
+  const [cor, setCor] = useState<Record<Lado, string>>({ A: coletes[0] ?? 'Preto', B: coletes[1] ?? 'Verde' })
   const [lados, setLados] = useState<Record<string, Lado>>({})
   const [busca, setBusca] = useState('')
   const [trocandoCor, setTrocandoCor] = useState<Lado | null>(null)
@@ -45,7 +47,7 @@ export default function NovaPartida({
 
   function repetirVencedor() {
     if (!vencedor) return
-    const outra = CORES_TIME.find((c) => c.nome !== vencedor.cor)!.nome
+    const outra = coletes.find((c) => c !== vencedor.cor) ?? 'Verde'
     setCor({ A: vencedor.cor, B: cor.B === vencedor.cor ? outra : cor.B })
     setLados(Object.fromEntries(vencedor.ids.map((id) => [id, 'A' as const])))
   }
@@ -113,25 +115,31 @@ export default function NovaPartida({
           <div className="col gap-6">
             <span className="small mut">Cor do time {trocandoCor === 'A' ? 'da esquerda' : 'da direita'}</span>
             <div className="chips">
-              {CORES_TIME.filter((c) => c.nome !== cor[trocandoCor === 'A' ? 'B' : 'A']).map((c) => (
+              {coletes.filter((c) => c !== cor[trocandoCor === 'A' ? 'B' : 'A']).map((c) => (
                 <button
-                  key={c.nome}
+                  key={c}
                   type="button"
-                  className={`chip${cor[trocandoCor] === c.nome ? ' on' : ''}`}
+                  className={`chip${cor[trocandoCor] === c ? ' on' : ''}`}
                   onClick={() => {
-                    setCor({ ...cor, [trocandoCor]: c.nome })
+                    setCor({ ...cor, [trocandoCor]: c })
                     setTrocandoCor(null)
                   }}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
-                  <span style={{ width: 10, height: 10, borderRadius: 5, background: c.hex, boxShadow: '0 0 0 1px #4A4A45' }} />
-                  {c.nome}
+                  <span style={{ width: 10, height: 10, borderRadius: 5, background: corHex(c), boxShadow: '0 0 0 1px #4A4A45' }} />
+                  {c}
                 </button>
               ))}
             </div>
           </div>
         )}
-        <span className="small mut center">Toque no nome do time para mudar a cor</span>
+        {coletes.length > 2 ? (
+          <span className="small mut center">Toque no nome do time para trocar o colete</span>
+        ) : (
+          <button type="button" className="btn sm" style={{ alignSelf: 'center' }} onClick={() => setCor({ A: cor.B, B: cor.A })}>
+            Inverter coletes
+          </button>
+        )}
       </section>
 
       <section className="col gap-8">

@@ -12,6 +12,8 @@ export type Perfil = {
   telefone: string | null
   login_liberado: boolean
   user_id: string | null
+  avatar: string | null
+  onboarding_em: string | null
 }
 
 export type Stats = {
@@ -24,7 +26,9 @@ export type Stats = {
   gols: number
   assist: number
   pts: number
+  defesas?: number
   rodadas?: number
+  avatar?: string | null
 }
 
 export const PAPEL_LABEL: Record<Papel, string> = {
@@ -50,11 +54,15 @@ export const iniciais = (nome: string) =>
 
 export const primeiroNome = (nome: string) => nome.split(/\s+/)[0] ?? nome
 
-/** Nível da carta do craque pelos pontos na rodada. */
-export const nivelRodada = (pts: number): Nivel => (pts >= 15 ? 'ouro' : pts >= 9 ? 'prata' : 'bronze')
+/** Pontuação de cada lance (igual à view v_stats_rodada no banco). */
+export const PONTOS = { vitoria: 4, empate: 2, gol: 8, assist: 5, defesa: 2 } as const
+
+/** Faixas da carta do craque pelos pontos na rodada. */
+export const FAIXA_RODADA = { prata: 30, ouro: 60 } as const
+export const nivelRodada = (pts: number): Nivel => (pts >= FAIXA_RODADA.ouro ? 'ouro' : pts >= FAIXA_RODADA.prata ? 'prata' : 'bronze')
 
 /** Overall a partir de pontos (rodada ou média por rodada). */
-export const overall = (pts: number) => Math.min(99, Math.max(40, Math.round(61 + pts * 1.25)))
+export const overall = (pts: number) => Math.min(99, Math.max(40, Math.round(61 + pts * 0.4)))
 
 /** Nível da carta do perfil pelo overall da temporada. */
 export const nivelOverall = (ovr: number): Nivel => (ovr >= 83 ? 'ouro' : ovr >= 75 ? 'prata' : 'bronze')
@@ -93,7 +101,8 @@ export const hhmm = (t: string) => t.slice(0, 5).replace(':', 'h')
 export const fmt1 = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 export const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
-export const pontosDe = (s: Pick<Stats, 'v' | 'e' | 'gols' | 'assist'>) => s.v * 3 + s.e + s.gols * 2 + s.assist
+export const pontosDe = (s: Pick<Stats, 'v' | 'e' | 'gols' | 'assist'> & { defesas?: number }) =>
+  s.v * PONTOS.vitoria + s.e * PONTOS.empate + s.gols * PONTOS.gol + s.assist * PONTOS.assist + (s.defesas ?? 0) * PONTOS.defesa
 
 export const ordenarRanking = <T extends Stats>(lista: T[]) =>
   [...lista].sort((a, b) => b.pts - a.pts || b.v - a.v || b.gols - a.gols || a.nome.localeCompare(b.nome))

@@ -20,11 +20,11 @@ type Rodada = { id: number; numero: number; data: string; horario: string; local
 
 export default async function PartidaIndex({ searchParams }: { searchParams: Promise<{ rodada?: string }> }) {
   const { rodada: rodadaParam } = await searchParams
-  const { supabase, perfil } = await getContexto()
-  const config = await getConfig()
+  const [{ supabase, perfil }, config] = await Promise.all([getContexto(), getConfig()])
   const admin = isAdmin(perfil.papel)
   const temporada = temporadaAtual()
 
+  await supabase.rpc('garantir_rodada')
   const { data: todas } = await supabase.from('rodadas').select('*').order('data', { ascending: false }).limit(30)
   const rodadas = (todas ?? []) as Rodada[]
   const aberta = rodadas.find((r) => r.status === 'em_andamento') ?? [...rodadas].reverse().find((r) => r.status === 'agendada') ?? null

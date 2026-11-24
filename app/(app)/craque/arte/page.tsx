@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { IconVoltar } from '@/components/icons'
 import { carregarCraque } from '@/lib/craque'
-import { getContexto } from '@/lib/dados'
+import { getConfig, getContexto } from '@/lib/dados'
+import { logoDe } from '@/lib/config'
 import ArteStory from './ArteStory'
 
 export default async function Arte({ searchParams }: { searchParams: Promise<{ rodada?: string }> }) {
   const { rodada } = await searchParams
-  const { supabase } = await getContexto()
+  const [{ supabase }, config] = await Promise.all([getContexto(), getConfig()])
   const dados = await carregarCraque(supabase, rodada ? Number(rodada) : undefined)
 
   return (
@@ -31,6 +32,10 @@ export default async function Arte({ searchParams }: { searchParams: Promise<{ r
           pts={dados.craque.pts}
           titulos={dados.titulos}
           media={dados.mediaFmt}
+          avatar={dados.craque.avatar}
+          logo={logoDe(config)}
+          grupo={config.nome_grupo}
+          fundo={config.cor_arte}
         />
       ) : (
         <div className="vazio">Nenhum craque para gerar arte ainda.</div>

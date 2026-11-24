@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { iniciais, primeiroNome, type Stats } from '@/lib/util'
+import Avatar from '@/components/Avatar'
+import { primeiroNome, type Stats } from '@/lib/util'
 
 const CORES = ['#FDE819', '#C9CED6', '#D08A4E']
 
@@ -51,12 +52,7 @@ export default function RankingView({
             {podio.map(({ r, i, h }) =>
               r ? (
                 <Link key={i} href={`/perfil?id=${r.jogador_id}`} className="col" style={{ alignItems: 'center', gap: 6, color: 'var(--txt)' }}>
-                  <div
-                    className="avatar"
-                    style={{ width: 56, height: 56, fontSize: 16, border: `3px solid ${CORES[i]}` }}
-                  >
-                    {iniciais(r.nome)}
-                  </div>
+                  <Avatar id={r.avatar} nome={r.nome} size={58} borda={CORES[i]} />
                   <span className="bold ellipsis" style={{ fontSize: 14, maxWidth: '100%' }}>{primeiroNome(r.nome)}</span>
                   <div
                     className="col"
@@ -93,7 +89,10 @@ export default function RankingView({
             {rows.map((r, i) => (
               <Link key={r.jogador_id} href={`/perfil?id=${r.jogador_id}`} className={`tabela-row${r.jogador_id === meuId ? ' eu' : ''}`}>
                 <span className="bold mut">{i + 1}</span>
-                <span className="ellipsis" style={{ fontWeight: 600 }}>{r.nome}</span>
+                <span className="row" style={{ gap: 8, minWidth: 0 }}>
+                  <Avatar id={r.avatar} nome={r.nome} size={26} />
+                  <span className="ellipsis" style={{ fontWeight: 600 }}>{r.nome}</span>
+                </span>
                 <span>{r.v}</span>
                 <span className="mut">{r.d}</span>
                 <span>{r.gols}</span>

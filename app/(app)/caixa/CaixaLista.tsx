@@ -3,9 +3,10 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { erroMsg, hojeISO, iniciais } from '@/lib/util'
+import Avatar from '@/components/Avatar'
+import { erroMsg, hojeISO } from '@/lib/util'
 
-type Item = { id: string; nome: string; pago: boolean; pagoEm?: string; metodo?: string }
+type Item = { id: string; nome: string; avatar?: string | null; pago: boolean; pagoEm?: string; metodo?: string }
 type Filtro = 'todos' | 'pend' | 'pagos'
 
 const dm = (iso?: string) => (iso ? iso.split('-').reverse().slice(0, 2).join('/') : '')
@@ -30,10 +31,15 @@ export default function CaixaLista({
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
 
+  // Resposta imediata: marca na tela e confirma no servidor em seguida
+  const [marcados, setMarcados] = useState<Record<string, boolean>>({})
+  lista = lista.map((p) => (p.id in marcados ? { ...p, pago: marcados[p.id], pagoEm: marcados[p.id] ? p.pagoEm ?? hojeISO() : undefined, metodo: p.metodo ?? 'Pix' } : p))
+
   async function alternar(item: Item) {
     if (item.pago && !confirm(`Desmarcar o pagamento de ${item.nome}?`)) return
     setOcupado(item.id)
     setErro(null)
+    setMarcados((m) => ({ ...m, [item.id]: !item.pago }))
     const supabase = createClient()
     const { error } = item.pago
       ? await supabase.from('pagamentos').delete().eq('jogador_id', item.id).eq('competencia', competencia)
@@ -46,7 +52,10 @@ export default function CaixaLista({
           registrado_por: registradoPor,
         })
     setOcupado(null)
-    if (error) return setErro(erroMsg(error))
+    if (error) {
+      setMarcados((m) => ({ ...m, [item.id]: item.pago }))
+      return setErro(erroMsg(error))
+    }
     router.refresh()
   }
 
@@ -71,7 +80,7 @@ export default function CaixaLista({
         {visiveis.length === 0 && <div className="vazio">Ninguém nesta lista.</div>}
         {visiveis.map((p) => (
           <div key={p.id} className="item" style={{ padding: '8px 8px 8px 12px' }}>
-            <span className="avatar">{iniciais(p.nome)}</span>
+            <Avatar id={p.avatar} nome={p.nome} size={40} />
             <div className="col flex-1">
               <span className="ellipsis" style={{ fontWeight: 600, fontSize: 15 }}>{p.nome}</span>
               <span className="small mut">{p.pago ? `Pago em ${dm(p.pagoEm)} · ${p.metodo}` : `Vence ${vencimento}`}</span>
@@ -89,7 +98,7 @@ export default function CaixaLista({
                   borderColor: p.pago ? 'var(--yel-line)' : 'var(--org)',
                 }}
               >
-                {ocupado === p.id ? '…' : p.pago ? 'Pago' : 'Marcar pago'}
+                {p.pago ? '✓ Pago' : 'Marcar pago'}
               </button>
             ) : (
               <span className="s13 bold" style={{ color: p.pago ? 'var(--yel)' : 'var(--org)', paddingRight: 8 }}>

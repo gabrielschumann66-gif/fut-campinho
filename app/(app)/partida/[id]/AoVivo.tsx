@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { IconLixo, IconMais, IconTroca, IconVoltar } from '@/components/icons'
 import { createClient } from '@/lib/supabase/client'
-import { corHex, erroMsg } from '@/lib/util'
+import { PONTOS, corHex, erroMsg } from '@/lib/util'
 
 type Lado = 'A' | 'B'
 type Partida = {
@@ -21,6 +21,7 @@ type Partida = {
 }
 type Jogador = { id: string; lado: Lado; nome: string }
 type Gol = { id: number; lado: Lado; autorId: string; assistId: string | null; minuto: number }
+type Defesa = { id: number; lado: Lado; jogadorId: string; minuto: number }
 
 const mmss = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -34,6 +35,7 @@ export default function AoVivo({
   nomes,
   elenco,
   gols,
+  defesas,
   vitorias,
   podeEditar,
   lancar,
@@ -43,6 +45,7 @@ export default function AoVivo({
   nomes: Record<string, string>
   elenco: { id: string; nome: string }[]
   gols: Gol[]
+  defesas: Defesa[]
   vitorias: Record<string, number>
   podeEditar: boolean
   lancar: boolean
@@ -51,6 +54,7 @@ export default function AoVivo({
   const aoVivo = partida.status === 'ao_vivo'
   const [corrigindo, setCorrigindo] = useState(false)
   const [autor, setAutor] = useState<Jogador | null>(null)
+  const [modo, setModo] = useState<'gol' | 'defesa'>('gol')
   const [adicionarEm, setAdicionarEm] = useState<Lado | null>(null)
   const [agora, setAgora] = useState(() => Date.now())
   const [ocupado, setOcupado] = useState(false)
@@ -70,6 +74,7 @@ export default function AoVivo({
     const canal = supabase
       .channel(`partida-${partida.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gols', filter: `partida_id=eq.${partida.id}` }, () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'defesas', filter: `partida_id=eq.${partida.id}` }, () => router.refresh())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'partidas', filter: `id=eq.${partida.id}` }, () => router.refresh())
       .subscribe()
     return () => {
@@ -103,8 +108,18 @@ export default function AoVivo({
     await rodar(() => createClient().from('gols').insert({ partida_id: partida.id, lado: a.lado, autor_id: a.id, assist_id: assistId, minuto }))
   }
 
+  async function registrarDefesa(j: Jogador) {
+    const minuto = lancar || !aoVivo ? 1 : Math.max(1, Math.ceil(decorrido / 60000))
+    await rodar(() => createClient().from('defesas').insert({ partida_id: partida.id, lado: j.lado, jogador_id: j.id, minuto }))
+  }
+
+  async function apagarDefesa(d: Defesa) {
+    if (!confirm(`Apagar a ação de defesa de ${nome(d.jogadorId)}?`)) return
+    await rodar(() => createClient().from('defesas').delete().eq('id', d.id))
+  }
+
   async function tirar(j: Jogador) {
-    if (gols.some((g) => g.autorId === j.id || g.assistId === j.id)) {
+    if (gols.some((g) => g.autorId === j.id || g.assistId === j.id) || defesas.some((d) => d.jogadorId === j.id)) {
       setAutor(null)
       return setErro(`${j.nome} tem lance neste jogo. Apague o lance antes de tirar do time.`)
     }
@@ -194,11 +209,17 @@ export default function AoVivo({
         {elencoTime.map((j) => {
           const g = gols.filter((x) => x.autorId === j.id).length
           const a = gols.filter((x) => x.assistId === j.id).length
+          const d = defesas.filter((x) => x.jogadorId === j.id).length
           return (
-            <button key={j.id} className="jog-btn" disabled={ocupado} onClick={() => setAutor(j)}>
+            <button
+              key={j.id}
+              className={`jog-btn${modo === 'defesa' ? ' defesa' : ''}`}
+              disabled={ocupado}
+              onClick={() => (modo === 'gol' ? setAutor(j) : registrarDefesa(j))}
+            >
               <span className="bold ellipsis" style={{ fontSize: 14, maxWidth: '100%' }}>{j.nome}</span>
               <span className="mut" style={{ fontSize: 11 }}>
-                {g || a ? [g && `${g}G`, a && `${a}A`].filter(Boolean).join(' · ') : 'tocar = gol'}
+                {g || a || d ? [g && `${g}G`, a && `${a}A`, d && `${d}D`].filter(Boolean).join(' · ') : modo === 'gol' ? 'tocar = gol' : 'tocar = defesa'}
               </span>
             </button>
           )
@@ -267,8 +288,24 @@ export default function AoVivo({
 
       {editavel && (
         <>
+          <div className="seg" role="tablist" aria-label="O que marcar">
+            <button role="tab" aria-selected={modo === 'gol'} className={modo === 'gol' ? 'on' : ''} onClick={() => setModo('gol')}>
+              Gol (+{PONTOS.gol})
+            </button>
+            <button role="tab" aria-selected={modo === 'defesa'} className={modo === 'defesa' ? 'on' : ''} onClick={() => setModo('defesa')}>
+              Defesa (+{PONTOS.defesa})
+            </button>
+          </div>
           <div className="passo">
-            <b>{autor ? 2 : 1}</b> {autor ? 'Quem deu a assistência?' : 'Toque em quem fez o gol'}
+            {modo === 'gol' ? (
+              <>
+                <b>{autor ? 2 : 1}</b> {autor ? 'Quem deu a assistência?' : 'Toque em quem fez o gol'}
+              </>
+            ) : (
+              <>
+                <b>1</b> Toque em quem desarmou, cortou ou defendeu. Cada toque vale uma ação.
+              </>
+            )}
           </div>
           <div className="grid-2" style={{ alignItems: 'start' }}>
             {colunaTime('A')}
@@ -285,7 +322,7 @@ export default function AoVivo({
       )}
 
       <section className="col gap-8">
-        <h2 className="h2" style={{ fontSize: 18 }}>LANCES</h2>
+        <h2 className="h2" style={{ fontSize: 18 }}>GOLS</h2>
         {gols.length === 0 && <div className="vazio">Nenhum gol ainda.</div>}
         {gols.map((g) => (
           <div key={g.id} className="item">
@@ -309,6 +346,26 @@ export default function AoVivo({
           </div>
         ))}
       </section>
+
+      {defesas.length > 0 && (
+        <section className="col gap-8">
+          <h2 className="h2" style={{ fontSize: 18 }}>AÇÕES DE DEFESA</h2>
+          {defesas.map((d) => (
+            <div key={d.id} className="item">
+              <span style={{ width: 10, height: 10, borderRadius: 5, background: corHex(cor(d.lado)), boxShadow: '0 0 0 1px #4A4A45', flexShrink: 0 }} />
+              <div className="col flex-1" style={{ minWidth: 0 }}>
+                <span className="bold ellipsis" style={{ fontSize: 14 }}>Defesa de {nome(d.jogadorId)}</span>
+                <span className="small mut ellipsis">{cor(d.lado)} · +{PONTOS.defesa} pts</span>
+              </div>
+              {editavel && (
+                <button className="icon-btn" style={{ width: 36, height: 36 }} aria-label={`Apagar defesa de ${nome(d.jogadorId)}`} onClick={() => apagarDefesa(d)} disabled={ocupado}>
+                  <IconLixo />
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
       {podeEditar && corrigindo && (
         <button className="btn sm" style={{ background: 'transparent', color: 'var(--mut)', alignSelf: 'center' }} onClick={excluirJogo}>

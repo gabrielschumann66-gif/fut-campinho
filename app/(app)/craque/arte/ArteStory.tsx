@@ -3,6 +3,8 @@
 import { toPng } from 'html-to-image'
 import { useEffect, useRef, useState } from 'react'
 import { IconUpload } from '@/components/icons'
+import Avatar from '@/components/Avatar'
+import { CORES_ARTE, corArte } from '@/lib/tema'
 import { TIER, ddmm, iniciais, type Nivel } from '@/lib/util'
 
 type Props = {
@@ -18,6 +20,10 @@ type Props = {
   pts: number
   titulos: number
   media: string
+  avatar: string | null
+  logo: string
+  grupo: string
+  fundo: string
 }
 
 const W = 540
@@ -31,6 +37,8 @@ export default function ArteStory(p: Props) {
   const [gerando, setGerando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const t = TIER[p.nivel]
+  const [fundo, setFundo] = useState(() => corArte(p.fundo))
+  const escuro = fundo.fg !== '#0B0B0A'
 
   useEffect(() => {
     const el = wrap.current
@@ -73,8 +81,8 @@ export default function ArteStory(p: Props) {
             height: H,
             transform: `scale(${escala})`,
             transformOrigin: 'top left',
-            background: '#FD6201',
-            color: '#0B0B0A',
+            background: fundo.hex,
+            color: fundo.fg,
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
@@ -92,12 +100,12 @@ export default function ArteStory(p: Props) {
               top: 230,
               width: 780,
               height: 420,
-              background: 'repeating-linear-gradient(-60deg, rgba(11,11,10,0.10) 0 18px, transparent 18px 46px)',
+              background: `repeating-linear-gradient(-60deg, ${escuro ? 'rgba(255,255,255,0.07)' : 'rgba(11,11,10,0.10)'} 0 18px, transparent 18px 46px)`,
             }}
           />
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/escudo.svg" alt="" width={84} height={70} style={{ objectFit: 'contain' }} />
+            <img src={p.logo} alt="" width={96} height={96} style={{ objectFit: 'contain' }} crossOrigin="anonymous" />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
               <span style={{ fontFamily: COND, fontWeight: 800, fontSize: 20, letterSpacing: 3 }}>
                 RODADA {p.rodada} · {ddmm(p.data)}
@@ -141,23 +149,29 @@ export default function ArteStory(p: Props) {
                 {t.label.toUpperCase()}
               </span>
             </div>
-            <div
-              style={{
-                alignSelf: 'center',
-                width: 128,
-                height: 128,
-                borderRadius: 64,
-                background: 'rgba(0,0,0,0.14)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: COND,
-                fontWeight: 800,
-                fontSize: 46,
-              }}
-            >
-              {iniciais(p.nome)}
-            </div>
+            {p.avatar ? (
+              <span style={{ alignSelf: 'center', display: 'inline-flex' }}>
+                <Avatar id={p.avatar} nome={p.nome} size={128} />
+              </span>
+            ) : (
+              <div
+                style={{
+                  alignSelf: 'center',
+                  width: 128,
+                  height: 128,
+                  borderRadius: 64,
+                  background: 'rgba(0,0,0,0.14)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: COND,
+                  fontWeight: 800,
+                  fontSize: 46,
+                }}
+              >
+                {iniciais(p.nome)}
+              </div>
+            )}
             <span style={{ alignSelf: 'center', fontFamily: COND, fontWeight: 800, fontSize: 36, marginTop: 10, whiteSpace: 'nowrap' }}>
               {p.nome.toUpperCase()}
             </span>
@@ -181,7 +195,7 @@ export default function ArteStory(p: Props) {
               position: 'relative',
               marginTop: 'auto',
               width: '100%',
-              background: '#0B0B0A',
+              background: fundo.hex === '#0B0B0A' ? '#1C1C1A' : '#0B0B0A',
               color: '#F5F5F0',
               borderRadius: 24,
               padding: 20,
@@ -213,11 +227,28 @@ export default function ArteStory(p: Props) {
             ))}
           </div>
           <span style={{ position: 'relative', marginTop: 16, fontFamily: COND, fontWeight: 700, fontSize: 18, letterSpacing: 4 }}>
-            @FUTCAMPINHO
+            @{p.grupo.normalize('NFD').replace(/[^A-Za-z0-9]/g, '').toUpperCase()}
           </span>
         </div>
       </div>
 
+      <div className="field">
+        Cor de fundo
+        <div className="chips" role="radiogroup" aria-label="Cor de fundo da arte">
+          {CORES_ARTE.map((c) => (
+            <button
+              key={c.hex}
+              role="radio"
+              aria-checked={fundo.hex === c.hex}
+              aria-label={c.nome}
+              title={c.nome}
+              className="cor-bola"
+              onClick={() => setFundo(c)}
+              style={{ background: c.hex, boxShadow: fundo.hex === c.hex ? '0 0 0 3px var(--bg), 0 0 0 5px var(--yel)' : '0 0 0 1px #4A4A45' }}
+            />
+          ))}
+        </div>
+      </div>
       <button className="btn org full" onClick={gerar} disabled={gerando} style={{ height: 50 }}>
         <IconUpload />
         {gerando ? 'Gerando imagem…' : 'Baixar / compartilhar imagem'}

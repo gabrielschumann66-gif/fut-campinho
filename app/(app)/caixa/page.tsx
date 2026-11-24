@@ -36,7 +36,7 @@ export default async function Caixa({ searchParams }: { searchParams: Promise<{ 
   const pagos = new Map((pagamentos ?? []).map((p) => [p.jogador_id as string, p]))
   const lista = ((jogadores ?? []) as Perfil[]).map((j) => {
     const p = pagos.get(j.id)
-    return { id: j.id, nome: nomeExibicao(j), pago: !!p, pagoEm: p?.pago_em as string | undefined, metodo: p?.metodo as string | undefined }
+    return { id: j.id, nome: nomeExibicao(j), avatar: j.avatar, pago: !!p, pagoEm: p?.pago_em as string | undefined, metodo: p?.metodo as string | undefined }
   })
   const arrecadado = (pagamentos ?? []).reduce((s, p) => s + Number(p.valor), 0)
   const meta = lista.length * Number(config.valor_mensalidade)

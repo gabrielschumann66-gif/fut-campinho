@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Carta from '@/components/Carta'
-import { IconLivro, IconSeta, IconVoltar } from '@/components/icons'
-import { getContexto, temporadaAtual } from '@/lib/dados'
+import { IconEstrela, IconLivro, IconSeta, IconVoltar } from '@/components/icons'
+import { getConfig, getContexto, temporadaAtual } from '@/lib/dados'
+import { logoDe } from '@/lib/config'
 import {
   TIER,
   fmt1,
@@ -9,6 +10,7 @@ import {
   nomeExibicao,
   ordenarRanking,
   overall,
+  PONTOS,
   type Perfil,
   type Stats,
 } from '@/lib/util'
@@ -19,7 +21,8 @@ type Lance = { chave: string; ordem: number; sigla: string; titulo: string; sub:
 
 export default async function PerfilPage({ searchParams }: { searchParams: Promise<{ id?: string; senha?: string }> }) {
   const { id, senha } = await searchParams
-  const { supabase, perfil: eu } = await getContexto()
+  const [{ supabase, perfil: eu }, config] = await Promise.all([getContexto(), getConfig()])
+  const logo = logoDe(config)
   const alvoId = id ?? eu.id
   const souEu = alvoId === eu.id
   const temporada = temporadaAtual()
@@ -58,7 +61,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
   const ultimas = rodadas.slice(-8)
 
   // Últimos lances
-  const [{ data: gols }, { data: participacoes }] = await Promise.all([
+  const [{ data: gols }, { data: participacoes }, { data: defesas }] = await Promise.all([
     supabase
       .from('gols')
       .select('id, partida_id, lado, autor_id, assist_id, autor:profiles!gols_autor_id_fkey(nome, apelido), assist:profiles!gols_assist_id_fkey(nome, apelido), partidas(numero, cor_a, cor_b, rodadas(numero))')
@@ -66,6 +69,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
       .order('id', { ascending: false })
       .limit(8),
     supabase.from('partida_jogadores').select('partida_id, lado').eq('jogador_id', alvoId).order('partida_id', { ascending: false }).limit(8),
+    supabase.from('defesas').select('id, partida_id, partidas(numero, rodadas(numero))').eq('jogador_id', alvoId).order('id', { ascending: false }).limit(8),
   ])
   const idsPartidas = (participacoes ?? []).map((p) => p.partida_id)
   const { data: placares } = idsPartidas.length
@@ -90,12 +94,12 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
     if (g.autor_id === alvoId) {
       lances.push({
         chave: `g${g.id}`, ordem: g.partida_id * 10 + 2, sigla: 'GOL', titulo: `Gol contra o ${adv}`,
-        sub: `${ctx} · ${g.assist ? `assist. de ${nm(g.assist)}` : 'sem assistência'}`, pts: '+2', bg: '#FDE819', fg: '#0B0B0A',
+        sub: `${ctx} · ${g.assist ? `assist. de ${nm(g.assist)}` : 'sem assistência'}`, pts: `+${PONTOS.gol}`, bg: '#FDE819', fg: '#0B0B0A',
       })
     } else {
       lances.push({
         chave: `a${g.id}`, ordem: g.partida_id * 10 + 1, sigla: 'AST', titulo: `Assistência para ${nm(g.autor)}`,
-        sub: ctx, pts: '+1', bg: '#2A2A27', fg: '#FDE819',
+        sub: ctx, pts: `+${PONTOS.assist}`, bg: '#2A2A27', fg: '#FDE819',
       })
     }
   }
@@ -112,8 +116,14 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
       chave: `p${pl.id}`, ordem: pl.id * 10 + 3, sigla: r,
       titulo: `${r === 'V' ? 'Vitória' : r === 'E' ? 'Empate' : 'Derrota'} · ${minhaCor} ${meu} × ${deles} ${outra}`,
       sub: `R${pl.rodadas?.numero ?? '?'} · Jogo ${pl.numero}`,
-      pts: r === 'V' ? '+3' : r === 'E' ? '+1' : '0',
+      pts: r === 'V' ? `+${PONTOS.vitoria}` : r === 'E' ? `+${PONTOS.empate}` : '0',
       bg: r === 'V' ? '#FD6201' : '#2A2A27', fg: r === 'V' ? '#0B0B0A' : r === 'E' ? '#F5F5F0' : '#A3A39B',
+    })
+  }
+  for (const d of (defesas ?? []) as unknown as { id: number; partida_id: number; partidas: { numero: number; rodadas: { numero: number } | null } | null }[]) {
+    lances.push({
+      chave: `d${d.id}`, ordem: d.partida_id * 10 + 1, sigla: 'DEF', titulo: 'Ação de defesa',
+      sub: d.partidas ? `R${d.partidas.rodadas?.numero ?? '?'} · Jogo ${d.partidas.numero}` : '', pts: `+${PONTOS.defesa}`, bg: '#22A355', fg: '#0B0B0A',
     })
   }
   lances.sort((a, b) => b.ordem - a.ordem)
@@ -136,7 +146,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
             </Link>
           )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/escudo.svg" alt="" width={44} height={37} style={{ objectFit: 'contain' }} />
+          <img src={logo} alt="" width={48} height={48} style={{ objectFit: 'contain' }} />
           <div className="col">
             <span className="cond" style={{ fontSize: 22 }}>{souEu ? `MEU PERFIL · ${nome.toUpperCase()}` : nome.toUpperCase()}</span>
             <span className="s13 mut">Temporada {temporada} · {n} rodadas</span>
@@ -155,6 +165,8 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
         />
         <Carta
           largura={240}
+          avatar={jogador.avatar}
+          logo={logo}
           nivel={nivel}
           ovr={ovr}
           posicao={jogador.posicao}
@@ -268,11 +280,18 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
       </section>
 
       {souEu && (
-        <Link href="/regras" className="item" style={{ padding: 14 }}>
-          <span className="yel"><IconLivro /></span>
-          <span className="flex-1" style={{ fontWeight: 600 }}>Regras do Campinho</span>
-          <span className="mut"><IconSeta /></span>
-        </Link>
+        <div className="col gap-8">
+          <Link href="/regras" className="atalho">
+            <span className="yel"><IconLivro /></span>
+            <span className="flex-1" style={{ fontWeight: 600 }}>Regras do {config.nome_grupo}</span>
+            <span className="mut"><IconSeta /></span>
+          </Link>
+          <Link href="/bem-vindo?rever=1" className="atalho">
+            <span className="yel"><IconEstrela /></span>
+            <span className="flex-1" style={{ fontWeight: 600 }}>Rever o tour e trocar foto</span>
+            <span className="mut"><IconSeta /></span>
+          </Link>
+        </div>
       )}
     </main>
   )

@@ -1,5 +1,7 @@
 import Link from 'next/link'
+import Avatar from '@/components/Avatar'
 import ConfirmarPresenca from '@/components/ConfirmarPresenca'
+import { logoDe } from '@/lib/config'
 import { IconCaixa, IconEngrenagem, IconLivro, IconMais, IconSeta, IconUsuarios } from '@/components/icons'
 import { getConfig, getContexto, temporadaAtual } from '@/lib/dados'
 import {
@@ -8,8 +10,8 @@ import {
   ddmm,
   diaSemana,
   hhmm,
-  iniciais,
   isAdmin,
+  isFinanceiro,
   nivelOverall,
   nivelRodada,
   nomeExibicao,
@@ -22,14 +24,16 @@ import {
 const CORES_PODIO = ['#FDE819', '#C9CED6', '#D08A4E']
 
 export default async function Inicio() {
-  const { supabase, perfil } = await getContexto()
-  const config = await getConfig()
+  const [{ supabase, perfil }, config] = await Promise.all([getContexto(), getConfig()])
   const temporada = temporadaAtual()
+
+  // Agenda a rodada da semana e começa no horário (fim continua manual)
+  await supabase.rpc('garantir_rodada')
 
   const [{ data: proxima }, { data: craque }, { data: ranking }] = await Promise.all([
     supabase
       .from('rodadas')
-      .select('*')
+      .select('*, presencas(jogador_id)')
       .in('status', ['agendada', 'em_andamento'])
       .order('data', { ascending: true })
       .limit(1)
@@ -38,13 +42,9 @@ export default async function Inicio() {
     supabase.from('v_ranking_temporada').select('*').eq('temporada', temporada),
   ])
 
-  let confirmados = 0
-  let euConfirmado = false
-  if (proxima) {
-    const { data: pres } = await supabase.from('presencas').select('jogador_id').eq('rodada_id', proxima.id)
-    confirmados = pres?.length ?? 0
-    euConfirmado = !!pres?.some((p) => p.jogador_id === perfil.id)
-  }
+  const pres = (proxima?.presencas ?? []) as { jogador_id: string }[]
+  const confirmados = pres.length
+  const euConfirmado = pres.some((p) => p.jogador_id === perfil.id)
 
   const lista = ordenarRanking((ranking ?? []) as Stats[])
   const minhaPos = lista.findIndex((r) => r.jogador_id === perfil.id)
@@ -58,9 +58,9 @@ export default async function Inicio() {
       <header className="between">
         <div className="row">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/escudo.svg" alt="Escudo do Campinho" width={52} height={43} style={{ objectFit: 'contain' }} />
+          <img src={logoDe(config)} alt={`Escudo do ${config.nome_grupo}`} width={56} height={56} style={{ objectFit: 'contain' }} />
           <div className="col">
-            <span className="cond" style={{ fontSize: 22, letterSpacing: 0.5 }}>FUT CAMPINHO</span>
+            <span className="cond" style={{ fontSize: 22, letterSpacing: 0.5 }}>{config.nome_grupo.toUpperCase()}</span>
             <span className="s13 mut">
               Fala, {primeiroNome(nomeExibicao(perfil))} · {PAPEL_LABEL[perfil.papel]}
             </span>
@@ -72,8 +72,8 @@ export default async function Inicio() {
               <IconEngrenagem />
             </Link>
           )}
-          <Link href="/perfil" className="avatar" aria-label="Meu perfil" style={{ width: 44, height: 44, background: 'var(--yel)', color: 'var(--bg)', fontSize: 15 }}>
-            {iniciais(nomeExibicao(perfil))}
+          <Link href="/perfil" aria-label="Meu perfil" style={{ display: 'inline-flex' }}>
+            <Avatar id={perfil.avatar} nome={nomeExibicao(perfil)} size={46} borda="var(--yel)" />
           </Link>
         </div>
       </header>
@@ -123,6 +123,41 @@ export default async function Inicio() {
         )}
       </section>
 
+      {proxima?.status === 'em_andamento' && (
+        <Link href="/partida" className="atalho" style={{ borderColor: 'var(--org)' }}>
+          <span className="ao-vivo-dot" />
+          <span className="flex-1 bold">Rodada rolando: ver jogos e placar ao vivo</span>
+          <span className="org"><IconSeta /></span>
+        </Link>
+      )}
+
+      {isAdmin(perfil.papel) && (
+        <section className="col gap-8">
+          <h2 className="h2">{perfil.papel === 'presidente' ? 'PRESIDÊNCIA' : 'CAPITÃO'}</h2>
+          <div className="grid-3">
+            <Link href="/partida/nova" className="acao-card destaque">
+              <IconMais size={26} />
+              <span>Registrar jogo</span>
+            </Link>
+            <Link href="/admin?aba=elenco" className="acao-card">
+              <span className="yel"><IconUsuarios size={26} /></span>
+              <span>Jogadores</span>
+            </Link>
+            <Link href={perfil.papel === 'presidente' ? '/configurar' : '/admin?aba=config'} className="acao-card">
+              <span className="yel"><IconEngrenagem size={26} /></span>
+              <span>{perfil.papel === 'presidente' ? 'Grupo' : 'Regras e agenda'}</span>
+            </Link>
+          </div>
+        </section>
+      )}
+      {isFinanceiro(perfil.papel) && (
+        <Link href="/caixa" className="atalho" style={{ borderColor: 'var(--yel-line)' }}>
+          <span className="yel"><IconCaixa size={22} /></span>
+          <span className="flex-1 bold">Marcar mensalidades do mês</span>
+          <span className="yel"><IconSeta /></span>
+        </Link>
+      )}
+
       {craque && nivel && (
         <Link href="/craque" className="card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, color: 'var(--txt)' }}>
           <div
@@ -171,26 +206,6 @@ export default async function Inicio() {
         </div>
       </Link>
 
-      {isAdmin(perfil.papel) && (
-        <section className="col gap-8">
-          <h2 className="h2">GESTÃO</h2>
-          <div className="grid-3">
-            <Link href="/partida/nova" className="card tight col gap-4" style={{ color: 'var(--txt)', background: 'var(--org)', borderColor: 'var(--org)' }}>
-              <span style={{ color: 'var(--bg)' }}><IconMais size={22} /></span>
-              <span className="bold s13" style={{ color: 'var(--bg)' }}>Registrar jogo</span>
-            </Link>
-            <Link href="/admin?aba=elenco" className="card tight col gap-4" style={{ color: 'var(--txt)' }}>
-              <span className="yel"><IconUsuarios size={22} /></span>
-              <span className="bold s13">Jogadores</span>
-            </Link>
-            <Link href="/admin?aba=rodadas" className="card tight col gap-4" style={{ color: 'var(--txt)' }}>
-              <span className="yel"><IconEngrenagem size={22} /></span>
-              <span className="bold s13">Rodadas</span>
-            </Link>
-          </div>
-        </section>
-      )}
-
       <section className="col gap-10">
         <div className="between">
           <h2 className="h2">TOP 3 DA TEMPORADA</h2>
@@ -200,8 +215,8 @@ export default async function Inicio() {
         {lista.slice(0, 3).map((p, i) => (
           <Link key={p.jogador_id} href={`/perfil?id=${p.jogador_id}`} className="item">
             <span className="cond" style={{ fontSize: 22, width: 18, color: CORES_PODIO[i] }}>{i + 1}</span>
-            <span className="avatar">{iniciais(p.nome)}</span>
-            <span className="flex-1 ellipsis" style={{ fontWeight: 600, fontSize: 15 }}>{p.nome}</span>
+            <Avatar id={p.avatar} nome={p.nome} size={40} />
+            <span className="flex-1 ellipsis" style={{ fontWeight: 600, fontSize: 16 }}>{p.nome}</span>
             <span className="cond" style={{ fontSize: 20 }}>
               {p.pts}
               <span className="small mut" style={{ fontFamily: 'var(--font-body)', fontWeight: 500 }}> pts</span>
@@ -213,7 +228,7 @@ export default async function Inicio() {
       <div className="col gap-8">
         <Link href="/regras" className="atalho">
           <span className="yel"><IconLivro /></span>
-          <span className="flex-1" style={{ fontWeight: 600 }}>Regras do Campinho</span>
+          <span className="flex-1" style={{ fontWeight: 600 }}>Regras do {config.nome_grupo}</span>
           <span className="mut"><IconSeta /></span>
         </Link>
         <Link href="/caixa" className="atalho">

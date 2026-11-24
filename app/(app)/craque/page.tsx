@@ -2,18 +2,22 @@ import Link from 'next/link'
 import Carta from '@/components/Carta'
 import { IconUpload } from '@/components/icons'
 import { carregarCraque } from '@/lib/craque'
-import { getContexto } from '@/lib/dados'
-import { TIER, ddmm } from '@/lib/util'
+import { getConfig, getContexto } from '@/lib/dados'
+import { logoDe } from '@/lib/config'
+import { FAIXA_RODADA, TIER, ddmm } from '@/lib/util'
 
 const REGRA = {
-  bronze: 'Bronze: até 8 pts\nna rodada',
-  prata: 'Prata: de 9 a 14 pts\nna rodada',
-  ouro: 'Ouro: 15 pts ou mais\nna rodada',
+  bronze: `Bronze: até ${FAIXA_RODADA.prata - 1} pts
+na rodada`,
+  prata: `Prata: de ${FAIXA_RODADA.prata} a ${FAIXA_RODADA.ouro - 1} pts
+na rodada`,
+  ouro: `Ouro: ${FAIXA_RODADA.ouro} pts ou mais
+na rodada`,
 }
 
 export default async function Craque({ searchParams }: { searchParams: Promise<{ rodada?: string }> }) {
   const { rodada } = await searchParams
-  const { supabase } = await getContexto()
+  const [{ supabase }, config] = await Promise.all([getContexto(), getConfig()])
   const dados = await carregarCraque(supabase, rodada ? Number(rodada) : undefined)
 
   if (!dados) {
@@ -37,6 +41,8 @@ export default async function Craque({ searchParams }: { searchParams: Promise<{
       </div>
 
       <Carta
+        avatar={craque.avatar}
+        logo={logoDe(config)}
         nivel={nivel}
         ovr={dados.ovr}
         posicao={dados.posicao}

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useOptimistic, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { erroMsg } from '@/lib/util'
 
+/** Confirma/cancela presença com resposta imediata na tela (o servidor confirma em seguida). */
 export default function ConfirmarPresenca({
   rodadaId,
   jogadorId,
@@ -18,33 +19,38 @@ export default function ConfirmarPresenca({
 }) {
   const router = useRouter()
   const [pendente, startTransition] = useTransition()
-  const [salvando, setSalvando] = useState(false)
+  const [otimista, setOtimista] = useOptimistic(confirmado)
   const [erro, setErro] = useState<string | null>(null)
 
-  async function alternar() {
-    setSalvando(true)
+  function alternar() {
     setErro(null)
-    const supabase = createClient()
-    const { error } = confirmado
-      ? await supabase.from('presencas').delete().eq('rodada_id', rodadaId).eq('jogador_id', jogadorId)
-      : await supabase.from('presencas').insert({ rodada_id: rodadaId, jogador_id: jogadorId })
-    setSalvando(false)
-    if (error) return setErro(erroMsg(error))
-    startTransition(() => router.refresh())
+    const novo = !otimista
+    startTransition(async () => {
+      setOtimista(novo)
+      const supabase = createClient()
+      const { error } = novo
+        ? await supabase.from('presencas').insert({ rodada_id: rodadaId, jogador_id: jogadorId })
+        : await supabase.from('presencas').delete().eq('rodada_id', rodadaId).eq('jogador_id', jogadorId)
+      if (error) {
+        setErro(erroMsg(error))
+        return
+      }
+      router.refresh()
+    })
   }
 
-  const ocupado = salvando || pendente
   return (
     <div className="col gap-4">
       <button
         className="btn full"
         onClick={alternar}
-        disabled={ocupado || (!confirmado && lotado)}
-        style={{ background: '#0B0B0A', color: confirmado ? '#F5F5F0' : '#FDE819', borderColor: '#0B0B0A' }}
+        disabled={pendente || (!otimista && lotado)}
+        aria-pressed={otimista}
+        style={{ height: 52, fontSize: 16, background: '#0B0B0A', color: otimista ? '#F5F5F0' : 'var(--yel)', borderColor: '#0B0B0A', opacity: 1 }}
       >
-        {ocupado ? 'Salvando…' : confirmado ? 'Presença confirmada · cancelar' : lotado ? 'Lista cheia' : 'Confirmar presença'}
+        {otimista ? '✓ Presença confirmada · toque para cancelar' : lotado ? 'Lista cheia' : 'Confirmar presença'}
       </button>
-      {erro && <span className="small" style={{ color: '#7A1F00', fontWeight: 600 }}>{erro}</span>}
+      {erro && <span className="s13" style={{ color: '#7A1F00', fontWeight: 700 }}>{erro}</span>}
     </div>
   )
 }

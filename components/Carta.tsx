@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { TIER, iniciais, type Nivel } from '@/lib/util'
+import Avatar from './Avatar'
 
 export type Linha = { k: string; v: string | number }
 
@@ -14,7 +15,11 @@ export default function Carta({
   versoTitulo,
   verso,
   largura = 262,
+  avatar,
+  logo = '/escudo.svg',
 }: {
+  avatar?: string | null
+  logo?: string
   nivel: Nivel
   ovr: number
   posicao: string
@@ -49,11 +54,17 @@ export default function Carta({
                   <span className="cond" style={{ fontSize: 20 * k, fontWeight: 700 }}>{posicao}</span>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/escudo.svg" alt="" width={54 * k} height={45 * k} style={{ objectFit: 'contain', marginTop: 6 }} />
+                <img src={logo} alt="" width={56 * k} height={56 * k} style={{ objectFit: 'contain', marginTop: 6 }} />
               </div>
-              <div className="carta-foto" style={{ width: 112 * k, height: 112 * k, fontSize: 40 * k, marginTop: -6 * k }}>
-                {iniciais(nome)}
-              </div>
+              {avatar ? (
+                <span style={{ alignSelf: 'center', marginTop: -6 * k, display: 'inline-flex' }}>
+                  <Avatar id={avatar} nome={nome} size={112 * k} />
+                </span>
+              ) : (
+                <div className="carta-foto" style={{ width: 112 * k, height: 112 * k, fontSize: 40 * k, marginTop: -6 * k }}>
+                  {iniciais(nome)}
+                </div>
+              )}
               <span className="cond ellipsis" style={{ alignSelf: 'center', fontSize: 30 * k, marginTop: 8 * k, maxWidth: '100%' }}>
                 {nome.toUpperCase()}
               </span>

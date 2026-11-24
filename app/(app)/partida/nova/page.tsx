@@ -86,6 +86,7 @@ export default async function NovaPartidaPage() {
         proximoNumero={Math.max(0, ...(partidas ?? []).map((p) => p.numero)) + 1}
         jogadores={jogadores}
         vencedor={vencedor}
+        coletes={config.coletes}
       />
     </main>
   )
