@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getConfig, getContexto } from '@/lib/dados'
-import { nomeExibicao, type Perfil } from '@/lib/util'
+import { nomeExibicao, precisaOnboarding, type Perfil } from '@/lib/util'
 import ConfigurarGrupo from './ConfigurarGrupo'
 
 export default async function Configurar() {
@@ -18,5 +18,5 @@ export default async function Configurar() {
     entrou: !!p.user_id,
   }))
 
-  return <ConfigurarGrupo config={config} eu={{ id: perfil.id, onboarding: !!perfil.onboarding_em }} elenco={elenco} />
+  return <ConfigurarGrupo config={config} eu={{ id: perfil.id, onboarding: !precisaOnboarding(perfil) }} elenco={elenco} />
 }

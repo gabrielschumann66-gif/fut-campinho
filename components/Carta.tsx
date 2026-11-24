@@ -221,19 +221,61 @@ export default function Carta({
   )
 }
 
-/** Mini carta (listas): mesmo escudo, nível pela cor do metal */
-export function MiniCarta({ nivel, ovr, rotulo, largura = 56 }: { nivel: Nivel; ovr: number; rotulo: string; largura?: number }) {
+/** Mini carta (listas): o mesmo escudo da carta, priorizando foto, metal do nível e o overall */
+export function MiniCarta({
+  nivel,
+  ovr,
+  rotulo,
+  largura = 64,
+  avatar,
+  nome = '',
+}: {
+  nivel: Nivel
+  ovr: number
+  rotulo: string
+  largura?: number
+  avatar?: string | null
+  nome?: string
+}) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '')
   const t = METAL[nivel]
+  const k = largura / 260
+  const altura = Math.round(largura * (370 / 260))
   return (
-    <div
-      className="mini-carta"
-      style={{
-        width: largura, height: largura * 1.32, color: t.fg,
-        background: `linear-gradient(115deg, transparent 30%, rgba(255,255,255,.4) 45%, transparent 60%), linear-gradient(160deg, ${t.a}, ${t.b} 45%, ${t.c})`,
-      }}
-    >
-      <span className="cond" style={{ fontSize: largura * 0.46 }}>{ovr}</span>
-      <span style={{ fontSize: largura * 0.17, fontWeight: 800, letterSpacing: 0.5 }}>{rotulo}</span>
+    <div className={`fut${t.premium ? ' premium' : ''}`} style={{ width: largura, height: altura, color: t.fg }}>
+      <svg viewBox="0 0 260 370" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id={`${id}g`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor={t.a} />
+            <stop offset=".45" stopColor={t.b} />
+            <stop offset={t.d ? 0.78 : 1} stopColor={t.c} />
+            {t.d && <stop offset="1" stopColor={t.d} />}
+          </linearGradient>
+          <linearGradient id={`${id}s`} x1="0" y1="0" x2="1" y2=".6">
+            <stop offset=".35" stopColor="#fff" stopOpacity="0" />
+            <stop offset=".5" stopColor="#fff" stopOpacity=".4" />
+            <stop offset=".62" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+          <clipPath id={`${id}c`}>
+            <path d={FORMA} />
+          </clipPath>
+        </defs>
+        <path d={FORMA} fill={`url(#${id}g)`} />
+        <rect x="0" y="0" width="260" height="370" fill={`url(#${id}s)`} clipPath={`url(#${id}c)`} />
+        <path d={FORMA} fill="none" stroke={t.premium ? '#fff4b8' : 'rgba(255,255,255,.6)'} strokeWidth={t.premium ? 8 : 5} />
+      </svg>
+      <span
+        style={{
+          position: 'absolute', left: '50%', top: 40 * k, transform: 'translateX(-50%)', borderRadius: '50%', display: 'inline-flex',
+          boxShadow: `0 0 0 ${Math.max(1.5, 7 * k)}px ${t.premium ? '#fff4b8' : 'rgba(255,255,255,.75)'}`,
+        }}
+      >
+        <Avatar id={avatar} nome={nome || rotulo} size={150 * k} />
+      </span>
+      <div className="col" style={{ position: 'absolute', left: 0, right: 0, top: 206 * k, alignItems: 'center', fontFamily: 'var(--cond)' }}>
+        <span style={{ fontSize: 92 * k, fontWeight: 900, lineHeight: 0.85 }}>{ovr}</span>
+        <span style={{ fontSize: 38 * k, fontWeight: 800, letterSpacing: 0.5, lineHeight: 1.1 }}>{rotulo}</span>
+      </div>
     </div>
   )
 }

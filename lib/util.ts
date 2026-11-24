@@ -141,3 +141,11 @@ export const mascaraTelefone = (v: string) => {
 
 /** A conta de login usa um e-mail interno derivado do telefone (ninguém precisa saber dele). */
 export const emailDoTelefone = (t: string) => `${normalizarTelefone(t)}@fut.gabrielschumann.com.br`
+
+/**
+ * Versão do onboarding. Quem concluiu antes desta data passa pelo tour de novo no próximo acesso
+ * (foto, posição e apelido vêm preenchidos; nada se perde). Mude a data para mostrar o tour a todos outra vez.
+ */
+export const ONBOARDING_VERSAO = '2026-11-24T22:00:00Z'
+export const precisaOnboarding = (p: { onboarding_em: string | null }) =>
+  !p.onboarding_em || new Date(p.onboarding_em).getTime() < new Date(ONBOARDING_VERSAO).getTime()

@@ -362,3 +362,15 @@ textarea.input { height: auto; min-height: 96px; padding: 12px 14px; line-height
 /* Quadro de pontuação */
 .pontos-grade { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 @media (max-width: 380px) { .pontos-grade { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Destaque do craque da rodada: borda dourada, caixa com brilho e título dourado */
+.card.craque-destaque {
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(90% 120% at 0% 0%, rgba(253, 205, 70, 0.2), transparent 60%) padding-box,
+    linear-gradient(180deg, #1b1810 0%, #0e0d0a 100%) padding-box,
+    linear-gradient(135deg, #fff4b8, #e9c862 30%, #8a6410 60%, #f3d570 100%) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 244, 184, 0.18), 0 14px 36px -16px rgba(233, 200, 98, 0.55);
+}
+.ouro-txt { background: linear-gradient(90deg, #fff4b8, #e9c862 50%, #f3d570); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ouro-txt svg { flex-shrink: 0; }

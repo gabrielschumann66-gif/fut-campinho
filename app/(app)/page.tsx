@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Avatar, { molduraDe } from '@/components/Avatar'
-import { MiniCarta } from '@/components/Carta'
+import { Coroa, MiniCarta } from '@/components/Carta'
 import ConfirmarPresenca from '@/components/ConfirmarPresenca'
 import { logoDe } from '@/lib/config'
 import { IconCaixa, IconEngrenagem, IconLivro, IconMais, IconSeta, IconUsuarios } from '@/components/icons'
@@ -198,22 +198,22 @@ export default async function Inicio() {
       )}
 
       {craque && nivel && (
-        <Link href="/craque" className="card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, color: 'var(--txt)' }}>
-          <MiniCarta nivel={nivel} ovr={overall(craque.pts)} rotulo="MVP" largura={60} />
+        <Link href="/craque" className="card craque-destaque" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, color: 'var(--txt)' }}>
+          <MiniCarta nivel={nivel} ovr={overall(craque.pts)} rotulo="MVP" largura={68} avatar={craque.avatar} nome={craque.nome} />
           <div className="col gap-4 flex-1">
-            <span className="kicker">Craque da rodada {craque.numero}</span>
+            <span className="kicker ouro-txt row" style={{ gap: 5 }}><Coroa size={14} cor="#f3d570" />Craque da rodada {craque.numero}</span>
             <span className="cond ellipsis" style={{ fontSize: 26 }}>{craque.nome.toUpperCase()}</span>
             <span className="s13 mut">
               {craque.v} vit. · {craque.gols} gols · {craque.assist} assist. · {craque.pts} pts
             </span>
           </div>
-          <span className="mut"><IconSeta /></span>
+          <span style={{ color: '#f3d570' }}><IconSeta /></span>
         </Link>
       )}
 
       <Link href="/perfil" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, color: 'var(--txt)', borderColor: 'var(--yel-line)' }}>
         <div className="row">
-          <MiniCarta nivel={meuNivel} ovr={meuOvr} rotulo={perfil.posicao} largura={52} />
+          <MiniCarta nivel={meuNivel} ovr={meuOvr} rotulo={perfil.posicao} largura={68} avatar={perfil.avatar} nome={nomeExibicao(perfil)} />
           <div className="col flex-1 gap-4">
             <span className="kicker">Meu perfil</span>
             <span className="cond ellipsis" style={{ fontSize: 24 }}>{nomeExibicao(perfil).toUpperCase()}</span>

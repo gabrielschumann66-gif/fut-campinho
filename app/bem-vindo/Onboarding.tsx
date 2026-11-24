@@ -241,7 +241,7 @@ export default function Onboarding({ rever, perfil, grupo, eu, craque, totalJoga
                 <div className="row" style={{ justifyContent: 'center', gap: 10 }}>
                   {(['bronze', 'prata', 'ouro'] as const).map((n, k) => (
                     <span key={n} style={{ transform: k === 2 ? 'scale(1.12)' : undefined, display: 'inline-flex' }}>
-                      <MiniCarta nivel={n} ovr={[71, 79, 87][k]} rotulo={TIER[n].label.toUpperCase()} largura={80} />
+                      <MiniCarta nivel={n} ovr={[71, 79, 87][k]} rotulo={TIER[n].label.toUpperCase()} largura={80} avatar={avatar} nome={nomeCarta} />
                     </span>
                   ))}
                 </div>,
