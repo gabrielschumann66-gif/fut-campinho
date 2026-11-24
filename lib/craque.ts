@@ -32,6 +32,7 @@ export async function carregarCraque(supabase: SupabaseClient, rodadaId?: number
       gols: number
       assist: number
       pts: number
+      defesas?: number
       avatar: string | null
     },
     posicao: (perfil?.posicao as string) ?? 'ATA',

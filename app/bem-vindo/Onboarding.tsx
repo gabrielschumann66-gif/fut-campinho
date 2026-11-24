@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import Carta from '@/components/Carta'
+import Carta, { MiniCarta } from '@/components/Carta'
 import EscolherAvatar from '@/components/EscolherAvatar'
 import TabelaPontos from '@/components/TabelaPontos'
 import { IconBola, IconCaixa, IconEstrela, IconTrofeu, IconUsuarios } from '@/components/icons'
@@ -146,10 +146,12 @@ export default function Onboarding({ rever, perfil, grupo, eu, craque, totalJoga
         <div className="onb-conteudo">
           {passo === 'oi' && (
             <>
-              <div className="col" style={{ alignItems: 'center', gap: 14, paddingTop: 12 }}>
+              <div className="onb-heroi">
+                <div className="palavras" aria-hidden="true">FUT FUT</div>
+                <div className="luz" aria-hidden="true" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={grupo.logo} alt={`Escudo do ${grupo.nome}`} width={170} height={170} style={{ objectFit: 'contain' }} />
-                <span className="badge yel" style={{ fontSize: 13, height: 28, padding: '0 12px' }}>{PAPEL_LABEL[perfil.papel]}</span>
+                <img src={grupo.logo} alt={`Escudo do ${grupo.nome}`} width={190} height={190} style={{ objectFit: 'contain', position: 'relative', transform: 'rotate(-4deg)', filter: 'drop-shadow(0 30px 40px rgba(0,0,0,.6))' }} />
+                <span className="badge yel" style={{ position: 'absolute', bottom: 0, fontSize: 13, height: 28, padding: '0 12px' }}>{PAPEL_LABEL[perfil.papel]}</span>
               </div>
               {texto(
                 `${ROTULO_ONB[perfil.papel]} · ${grupo.nome}`,
@@ -238,14 +240,9 @@ export default function Onboarding({ rever, perfil, grupo, eu, craque, totalJoga
               {ilus(
                 <div className="row" style={{ justifyContent: 'center', gap: 10 }}>
                   {(['bronze', 'prata', 'ouro'] as const).map((n, k) => (
-                    <div
-                      key={n}
-                      className="carta col"
-                      style={{ width: 82, height: 116, background: TIER[n].bg, color: TIER[n].fg, padding: '12px 10px', transform: k === 2 ? 'scale(1.12)' : undefined }}
-                    >
-                      <span className="cond" style={{ fontSize: 24 }}>{[71, 79, 87][k]}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700 }}>{TIER[n].label.toUpperCase()}</span>
-                    </div>
+                    <span key={n} style={{ transform: k === 2 ? 'scale(1.12)' : undefined, display: 'inline-flex' }}>
+                      <MiniCarta nivel={n} ovr={[71, 79, 87][k]} rotulo={TIER[n].label.toUpperCase()} largura={80} />
+                    </span>
                   ))}
                 </div>,
               )}
@@ -445,9 +442,12 @@ export default function Onboarding({ rever, perfil, grupo, eu, craque, totalJoga
                   avatar={avatar}
                   logo={grupo.logo}
                   stats={[
-                    { k: 'VIT', v: eu?.v ?? 0 },
                     { k: 'GOL', v: eu?.gols ?? 0 },
                     { k: 'AST', v: eu?.assist ?? 0 },
+                    { k: 'VIT', v: eu?.v ?? 0 },
+                    { k: 'PTS', v: eu?.pts ?? 0 },
+                    { k: 'OVR', v: eu?.ovr ?? 61 },
+                    { k: 'POS', v: eu ? `${eu.pos}º` : '—' },
                   ]}
                   versoTitulo="SUA CARTA"
                   verso={[

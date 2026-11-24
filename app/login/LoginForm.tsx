@@ -111,15 +111,34 @@ export default function LoginForm({ grupo, logo }: { grupo: string; logo: string
 
   return (
     <main className="app">
-      <div className="screen sem-nav" style={{ justifyContent: 'center', gap: 24 }}>
-        <div className="col" style={{ alignItems: 'center', gap: 10, textAlign: 'center' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt={`Escudo do ${grupo}`} width={150} height={150} style={{ objectFit: 'contain' }} />
-          <h1 className="title">{grupo.toUpperCase()}</h1>
-          <span className="mut s13">
-            {etapa === 'telefone' && 'Entre com o celular cadastrado no grupo'}
-            {etapa === 'entrar' && `Fala, ${nome}! Digite seu PIN.`}
-            {etapa === 'criar' && `Achamos você, ${nome}! Crie um PIN de 6 números e veja seus números.`}
+      <div className="abertura">
+        <div className="palavras" aria-hidden="true">
+          FUT <b>FUT</b>
+          <br />
+          {grupo.split(' ').slice(-1)[0]}
+          <br />
+          RODADA <b>★</b>
+          <br />
+          CRAQUE
+        </div>
+        <div className="luz" aria-hidden="true" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="escudo" src={logo} alt={`Escudo do ${grupo}`} />
+        <div className="base">
+        <div className="col" style={{ gap: 10 }}>
+          <h1>
+            {etapa === 'telefone' ? (
+              <>Entra em<br /><span className="fogo-txt">campo.</span></>
+            ) : etapa === 'sem_convite' ? (
+              <>Opa,<br /><span className="fogo-txt">calma aí.</span></>
+            ) : (
+              <>Fala,<br /><span className="fogo-txt">{nome.split(' ')[0]}!</span></>
+            )}
+          </h1>
+          <span className="mut" style={{ fontSize: 16, lineHeight: 1.45 }}>
+            {etapa === 'telefone' && `Entre com o celular cadastrado no ${grupo}.`}
+            {etapa === 'entrar' && 'Digite seu PIN para entrar.'}
+            {etapa === 'criar' && 'Achamos você! Crie um PIN de 6 números e veja seus números.'}
             {etapa === 'sem_convite' && 'Celular não encontrado'}
           </span>
         </div>
@@ -141,7 +160,7 @@ export default function LoginForm({ grupo, logo }: { grupo: string; logo: string
               />
             </label>
             {erro && <span className="erro" role="alert">{erro}</span>}
-            <button className="btn yel full" disabled={carregando}>{carregando ? 'Verificando…' : 'Continuar'}</button>
+            <button className="btn yel seta full" disabled={carregando}>{carregando ? 'Verificando…' : 'Continuar'}<span className="bola" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M8 7h9v9" /></svg></span></button>
           </form>
         )}
 
@@ -158,8 +177,9 @@ export default function LoginForm({ grupo, logo }: { grupo: string; logo: string
             {pinInput(pin, setPin, etapa === 'entrar' ? 'PIN' : 'Crie seu PIN (6 números)', pinRef)}
             {etapa === 'criar' && pinInput(pin2, setPin2, 'Repita o PIN')}
             {erro && <span className="erro" role="alert">{erro}</span>}
-            <button className="btn yel full" disabled={carregando}>
+            <button className="btn yel seta full" disabled={carregando}>
               {carregando ? 'Aguarde…' : etapa === 'entrar' ? 'Entrar' : 'Criar acesso e entrar'}
+              <span className="bola" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M8 7h9v9" /></svg></span>
             </button>
             {etapa === 'criar' && (
               <span className="small mut center">Guarde o PIN. Se esquecer, um capitão reseta seu acesso.</span>
@@ -178,6 +198,7 @@ export default function LoginForm({ grupo, logo }: { grupo: string; logo: string
             <button className="btn full" onClick={voltar}>Tentar outro número</button>
           </div>
         )}
+        </div>
       </div>
     </main>
   )

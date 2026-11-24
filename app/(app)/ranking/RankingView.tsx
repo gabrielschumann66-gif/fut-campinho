@@ -2,10 +2,8 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import Avatar from '@/components/Avatar'
+import Avatar, { molduraDe } from '@/components/Avatar'
 import { primeiroNome, type Stats } from '@/lib/util'
-
-const CORES = ['#FDE819', '#C9CED6', '#D08A4E']
 
 export default function RankingView({
   meuId,
@@ -23,15 +21,15 @@ export default function RankingView({
   const [aba, setAba] = useState<'T' | 'D'>('T')
   const rows = aba === 'T' ? temporada : dia
   const podio = [
-    { r: rows[1], i: 1, h: 78 },
-    { r: rows[0], i: 0, h: 104 },
-    { r: rows[2], i: 2, h: 62 },
+    { r: rows[1], i: 1, h: 84 },
+    { r: rows[0], i: 0, h: 112 },
+    { r: rows[2], i: 2, h: 68 },
   ]
 
   return (
     <main className="screen">
       <div className="between" style={{ alignItems: 'flex-end' }}>
-        <h1 className="title">RANKING</h1>
+        <h1 className="title">Ranking</h1>
         <span className="s13 mut">{aba === 'T' ? subTemporada : subDia}</span>
       </div>
 
@@ -48,26 +46,17 @@ export default function RankingView({
         <div className="vazio">Ainda não há partidas registradas aqui.</div>
       ) : (
         <>
-          <div className="grid-3" style={{ alignItems: 'end' }}>
+          <div className="podio">
             {podio.map(({ r, i, h }) =>
               r ? (
-                <Link key={i} href={`/perfil?id=${r.jogador_id}`} className="col" style={{ alignItems: 'center', gap: 6, color: 'var(--txt)' }}>
-                  <Avatar id={r.avatar} nome={r.nome} size={58} borda={CORES[i]} />
-                  <span className="bold ellipsis" style={{ fontSize: 14, maxWidth: '100%' }}>{primeiroNome(r.nome)}</span>
-                  <div
-                    className="col"
-                    style={{
-                      width: '100%',
-                      height: h,
-                      borderRadius: '14px 14px 4px 4px',
-                      background: 'var(--card)',
-                      borderTop: `3px solid ${CORES[i]}`,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <span className="cond" style={{ fontSize: 30, color: CORES[i] }}>{i + 1}º</span>
-                    <span className="small mut">{r.pts} pts</span>
+                <Link key={i} href={`/perfil?id=${r.jogador_id}`} className="p">
+                  <span style={{ marginTop: i === 0 ? 22 : 0 }}>
+                    <Avatar id={r.avatar} nome={r.nome} size={i === 0 ? 66 : 56} moldura={molduraDe(i)} />
+                  </span>
+                  <span className="bold ellipsis" style={{ fontSize: 14, maxWidth: '100%', marginTop: 4 }}>{primeiroNome(r.nome)}</span>
+                  <div className={`caixa metal-${i + 1}${i === 0 ? ' c1' : ''}`} style={{ height: h }}>
+                    <span className="n" style={i === 0 ? { fontSize: 48 } : undefined}>{i + 1}º</span>
+                    <span className="pt">{r.pts} PTS</span>
                   </div>
                 </Link>
               ) : (
@@ -88,16 +77,16 @@ export default function RankingView({
             </div>
             {rows.map((r, i) => (
               <Link key={r.jogador_id} href={`/perfil?id=${r.jogador_id}`} className={`tabela-row${r.jogador_id === meuId ? ' eu' : ''}`}>
-                <span className="bold mut">{i + 1}</span>
+                <span className={`bold ${r.jogador_id === meuId ? 'yel' : 'mut'}`}>{i + 1}</span>
                 <span className="row" style={{ gap: 8, minWidth: 0 }}>
-                  <Avatar id={r.avatar} nome={r.nome} size={26} />
+                  <Avatar id={r.avatar} nome={r.nome} size={26} moldura={molduraDe(i)} />
                   <span className="ellipsis" style={{ fontWeight: 600 }}>{r.nome}</span>
                 </span>
                 <span>{r.v}</span>
                 <span className="mut">{r.d}</span>
                 <span>{r.gols}</span>
                 <span>{r.assist}</span>
-                <span className="cond yel" style={{ fontSize: 17 }}>{r.pts}</span>
+                <span className="cond yel" style={{ fontSize: 18 }}>{r.pts}</span>
               </Link>
             ))}
           </div>

@@ -4,11 +4,11 @@ import { IconEstrela, IconLivro, IconSeta, IconVoltar } from '@/components/icons
 import { getConfig, getContexto, temporadaAtual } from '@/lib/dados'
 import { logoDe } from '@/lib/config'
 import {
-  TIER,
   fmt1,
   nivelOverall,
   nomeExibicao,
   ordenarRanking,
+  primeiroNome,
   overall,
   PONTOS,
   type Perfil,
@@ -139,30 +139,29 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
   return (
     <main className="screen" style={{ gap: 20 }}>
       <div className="between">
-        <div className="row">
-          {!souEu && (
-            <Link href="/ranking" className="icon-btn" aria-label="Voltar">
-              <IconVoltar />
-            </Link>
-          )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt="" width={48} height={48} style={{ objectFit: 'contain' }} />
-          <div className="col">
-            <span className="cond" style={{ fontSize: 22 }}>{souEu ? `MEU PERFIL · ${nome.toUpperCase()}` : nome.toUpperCase()}</span>
-            <span className="s13 mut">Temporada {temporada} · {n} rodadas</span>
-          </div>
+        {!souEu ? (
+          <Link href="/ranking" className="icon-btn" aria-label="Voltar">
+            <IconVoltar />
+          </Link>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logo} alt="" width={44} height={44} style={{ objectFit: 'contain' }} />
+        )}
+        <div className="col" style={{ alignItems: 'center' }}>
+          <span className="kicker">{souEu ? 'Meu perfil' : `Temporada ${temporada}`}</span>
+          <span className="cond" style={{ fontSize: 20 }}>{souEu ? `Temporada ${temporada}` : `${n} rodadas`}</span>
         </div>
-        {souEu && <EditarPerfil perfil={jogador} abrirSenha={senha === '1'} />}
+        {souEu ? <EditarPerfil perfil={jogador} abrirSenha={senha === '1'} /> : <span style={{ width: 44 }} />}
       </div>
 
       <div style={{ position: 'relative' }} className="col">
-        <div
+        <span
+          className="nome-fundo"
           aria-hidden="true"
-          style={{
-            position: 'absolute', top: 40, left: '50%', transform: 'translateX(-50%)', width: 300, height: 300, borderRadius: 150,
-            background: 'radial-gradient(circle, rgba(201,206,214,0.22), rgba(11,11,10,0) 68%)',
-          }}
-        />
+          style={{ fontSize: Math.max(90, Math.min(230, Math.round(560 / Math.max(3, primeiroNome(nome).length)))) }}
+        >
+          {primeiroNome(nome)}
+        </span>
         <Carta
           largura={240}
           avatar={jogador.avatar}
@@ -171,11 +170,14 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
           ovr={ovr}
           posicao={jogador.posicao}
           nome={nome}
+          mvp={titulos?.length ?? 0}
           stats={[
-            { k: 'VIT', v: st?.v ?? 0 },
             { k: 'GOL', v: st?.gols ?? 0 },
             { k: 'AST', v: st?.assist ?? 0 },
-            { k: 'MVP', v: titulos?.length ?? 0 },
+            { k: 'VIT', v: st?.v ?? 0 },
+            { k: 'DEF', v: st?.defesas ?? 0 },
+            { k: 'PTS', v: st?.pts ?? 0 },
+            { k: 'JOG', v: jogos },
           ]}
           versoTitulo={proxNivel ? 'PRÓXIMO NÍVEL' : 'NÍVEL MÁXIMO'}
           verso={
@@ -186,38 +188,56 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
                   : 'Carta OURO. Mantenha a média para continuar no topo.'}
               </span>
               <div style={{ height: 10, borderRadius: 5, background: 'rgba(0,0,0,0.15)', overflow: 'hidden' }}>
-                <div style={{ height: 10, width: `${proxNivel ? Math.round((ovr / proxNivel.alvo) * 100) : 100}%`, background: TIER[nivel].fg, borderRadius: 5 }} />
+                <div style={{ height: 10, width: `${proxNivel ? Math.round((ovr / proxNivel.alvo) * 100) : 100}%`, background: 'currentColor', borderRadius: 5 }} />
               </div>
-              <div className="linha-verso" style={{ marginTop: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>Bronze</span><b>até 74</b></div>
-              <div className="linha-verso"><span style={{ fontSize: 13, fontWeight: 600 }}>Prata</span><b>75 a 82</b></div>
+              <div className="between" style={{ borderBottom: '1px solid rgba(0,0,0,.18)', paddingBottom: 6, marginTop: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>Bronze</span><b>até 74</b></div>
+              <div className="between" style={{ borderBottom: '1px solid rgba(0,0,0,.18)', paddingBottom: 6 }}><span style={{ fontSize: 13, fontWeight: 600 }}>Prata</span><b>75 a 82</b></div>
               <div className="between"><span style={{ fontSize: 13, fontWeight: 600 }}>Ouro</span><b>83+</b></div>
             </>
           }
         />
       </div>
 
-      <div className="grid-3">
-        <Link href="/ranking" className="card tight stat" style={{ color: 'var(--txt)' }}>
-          <span className="cond org" style={{ fontSize: 30 }}>{pos >= 0 ? `${pos + 1}º` : '—'}</span>
-          <span className="small mut">no ranking</span>
-        </Link>
-        <div className="card tight stat">
-          <span className="cond" style={{ fontSize: 30 }}>{st?.pts ?? 0}</span>
-          <span className="small mut">pontos totais</span>
-          <span className="small mut" style={{ fontWeight: 600 }}>
-            {lider && st && lider.jogador_id !== alvoId ? `${lider.pts - st.pts} do líder` : pos === 0 ? 'líder' : ''}
-          </span>
+      <div className="grid-2">
+        <div className="tile trofeu dest">
+          <div className="topo"><span className="lbl">Gols</span><span className="x"><small>×</small>{st?.gols ?? 0}</span></div>
+          <span className="rod">{n ? `${fmt1((st?.gols ?? 0) / n)} por rodada` : 'sem rodadas ainda'}</span>
         </div>
-        <div className="card tight stat">
-          <span className="cond yel" style={{ fontSize: 30 }}>{titulos?.length ?? 0}×</span>
-          <span className="small mut">craque da rodada</span>
-          {titulos?.[0] && <span className="small mut" style={{ fontWeight: 600 }}>último: R{titulos[0].numero}</span>}
+        <Link href="/ranking" className="tile trofeu">
+          <div className="topo"><span className="lbl">Ranking</span><span className="x org">{pos >= 0 ? `${pos + 1}º` : '—'}</span></div>
+          <span className="rod">{lider && st && lider.jogador_id !== alvoId ? `${lider.pts - st.pts} pts do líder` : pos === 0 ? 'líder da temporada' : `${st?.pts ?? 0} pontos`}</span>
+        </Link>
+        <div className="tile trofeu">
+          <div className="topo"><span className="lbl">Assis&shy;tências</span><span className="x"><small>×</small>{st?.assist ?? 0}</span></div>
+          <span className="rod">{n ? `${fmt1((st?.assist ?? 0) / n)} por rodada` : 'sem rodadas ainda'}</span>
+        </div>
+        <div className="tile trofeu">
+          <div className="topo"><span className="lbl">Craque da<br />rodada</span><span className="x yel"><small>×</small>{titulos?.length ?? 0}</span></div>
+          <span className="rod">{titulos?.[0] ? `último: R${titulos[0].numero}` : 'ainda não'}</span>
+        </div>
+      </div>
+
+      <div className="card col gap-12">
+        <div className="between">
+          <div className="col gap-4">
+            <span className="kicker">Nível da carta</span>
+            <span className="h2" style={{ fontSize: 22 }}>{proxNivel ? `Faltam ${proxNivel.alvo - ovr} para ${proxNivel.nome.toLowerCase()}` : 'Ouro · mantenha a média'}</span>
+          </div>
+          <span className="cond" style={{ fontSize: 32, fontWeight: 900 }}>{ovr}</span>
+        </div>
+        <div className="barra listrada" style={{ height: 12 }}>
+          <div style={{ width: `${Math.min(100, Math.round(((ovr - 40) / (99 - 40)) * 100))}%` }} />
+        </div>
+        <div className="between small bold" style={{ color: 'var(--dim)', letterSpacing: 0.5 }}>
+          <span className={nivel === 'bronze' ? 'yel' : ''}>BRONZE</span>
+          <span className={nivel === 'prata' ? 'yel' : ''}>PRATA 75</span>
+          <span className={nivel === 'ouro' ? 'yel' : ''}>OURO 83</span>
         </div>
       </div>
 
       <div className="card col gap-10">
         <div className="between">
-          <h2 className="h2">NA TEMPORADA</h2>
+          <h2 className="h2">Na temporada</h2>
           <span className="small mut">{jogos} {jogos === 1 ? 'jogo' : 'jogos'} com time registrado</span>
         </div>
         <div className="grid-4 center">
@@ -227,7 +247,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
             ['Vitórias', st?.v ?? 0, ''],
             ['Derrotas', st?.d ?? 0, 'mut'],
           ].map(([k, v, c]) => (
-            <div key={k as string} className="col" style={{ background: 'var(--bg)', borderRadius: 14, padding: '10px 0' }}>
+            <div key={k as string} className="col" style={{ background: 'var(--bg)', borderRadius: 14, padding: '10px 0', border: '1px solid var(--line2)' }}>
               <span className={`cond ${c}`} style={{ fontSize: 30 }}>{v}</span>
               <span className="small mut">{k}</span>
             </div>
@@ -260,7 +280,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
       </div>
 
       <section className="col gap-10">
-        <h2 className="h2">ÚLTIMOS LANCES</h2>
+        <h2 className="h2">Últimos lances</h2>
         {lances.length === 0 && <div className="vazio">Nenhum lance registrado ainda.</div>}
         {lances.slice(0, 6).map((l) => (
           <div key={l.chave} className="item">

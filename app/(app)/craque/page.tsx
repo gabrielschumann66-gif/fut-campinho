@@ -25,7 +25,7 @@ export default async function Craque({ searchParams }: { searchParams: Promise<{
       <main className="screen">
         <div className="col" style={{ alignItems: 'center', gap: 2 }}>
           <span className="kicker">Man of the Match</span>
-          <h1 className="title" style={{ fontSize: 32 }}>CRAQUE DA RODADA</h1>
+          <h1 className="title" style={{ fontSize: 40 }}>Craque da rodada</h1>
         </div>
         <div className="vazio">O craque aparece quando a primeira rodada for encerrada.</div>
       </main>
@@ -37,7 +37,7 @@ export default async function Craque({ searchParams }: { searchParams: Promise<{
     <main className="screen" style={{ alignItems: 'center' }}>
       <div className="col" style={{ alignItems: 'center', gap: 2 }}>
         <span className="kicker">Man of the Match · Rodada {craque.numero} · {ddmm(craque.data)}</span>
-        <h1 className="title" style={{ fontSize: 32 }}>CRAQUE DA RODADA</h1>
+        <h1 className="title" style={{ fontSize: 40 }}>Craque da rodada</h1>
       </div>
 
       <Carta
@@ -47,11 +47,14 @@ export default async function Craque({ searchParams }: { searchParams: Promise<{
         ovr={dados.ovr}
         posicao={dados.posicao}
         nome={craque.nome}
+        mvp={dados.titulos}
         stats={[
-          { k: 'VIT', v: craque.v },
           { k: 'GOL', v: craque.gols },
           { k: 'AST', v: craque.assist },
-          { k: 'MVP', v: dados.titulos },
+          { k: 'VIT', v: craque.v },
+          { k: 'DEF', v: craque.defesas ?? 0 },
+          { k: 'PTS', v: craque.pts },
+          { k: 'MÉD', v: dados.mediaFmt },
         ]}
         versoTitulo="HISTÓRICO"
         verso={[
@@ -78,7 +81,7 @@ export default async function Craque({ searchParams }: { searchParams: Promise<{
 
       {dados.outrasRodadas.length > 1 && (
         <div className="col gap-8" style={{ width: '100%' }}>
-          <h2 className="h2">OUTRAS RODADAS</h2>
+          <h2 className="h2">Outras rodadas</h2>
           <div className="chips">
             {dados.outrasRodadas.map((r) => (
               <Link

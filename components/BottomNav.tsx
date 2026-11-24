@@ -9,7 +9,7 @@ const ITENS = [
   { href: '/ranking', label: 'Ranking', Icon: IconTrofeu },
   { href: '/partida', label: 'Jogos', Icon: IconBola },
   { href: '/craque', label: 'Craque', Icon: IconEstrela },
-  { href: '/perfil', label: 'Meu perfil', Icon: IconPessoa },
+  { href: '/perfil', label: 'Perfil', Icon: IconPessoa },
 ]
 
 export default function BottomNav({ admin }: { admin: boolean }) {
@@ -22,7 +22,7 @@ export default function BottomNav({ admin }: { admin: boolean }) {
             href === '/' ? path === '/' : href === '/perfil' ? path === '/perfil' : href === '/partida' ? path.startsWith('/partida') && !path.startsWith('/partida/nova') : path.startsWith(href)
           return (
             <Link key={href} href={href} className={on ? 'on' : undefined} aria-current={on ? 'page' : undefined}>
-              <Icon />
+              <Icon size={22} />
               {label}
             </Link>
           )
@@ -30,7 +30,7 @@ export default function BottomNav({ admin }: { admin: boolean }) {
       </div>
       {admin && (
         <Link href="/partida/nova" className="fab" aria-label="Registrar jogo">
-          <IconMais />
+          <IconMais size={28} stroke={2.8} />
         </Link>
       )}
     </nav>
