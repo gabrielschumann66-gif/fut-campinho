@@ -1,9 +1,16 @@
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { CONFIG_PADRAO, type Config } from '@/lib/config'
 import type { Perfil } from '@/lib/util'
 
-export { getConfig } from '@/lib/config'
+/** Configuração completa do grupo (local, horário, valores): só para quem está logado. */
+export const getConfig = cache(async (): Promise<Config> => {
+  const supabase = await createClient()
+  const { data: c } = await supabase.from('config').select('*').eq('id', 1).maybeSingle()
+  if (!c) return CONFIG_PADRAO
+  return { ...CONFIG_PADRAO, ...c, valor_mensalidade: Number(c.valor_mensalidade ?? CONFIG_PADRAO.valor_mensalidade) }
+})
 
 /**
  * Cliente + usuário logado + perfil. Redireciona para /login se não houver sessão.

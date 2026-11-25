@@ -251,7 +251,7 @@ export default function ConfigurarGrupo({
                   <span className="bold">Escudo</span>
                   <label className="btn sm" style={{ alignSelf: 'flex-start' }}>
                     {enviandoLogo ? 'Enviando…' : 'Trocar imagem'}
-                    <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={(e) => enviarLogo(e.target.files?.[0])} />
+                    <input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => enviarLogo(e.target.files?.[0])} />
                   </label>
                   {logo && (
                     <button className="small mut" style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left' }} onClick={() => setLogo(null)}>

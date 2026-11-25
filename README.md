@@ -85,3 +85,20 @@ lib/                  clientes Supabase, utilitários e consultas
 supabase/migrations/  schema, views de estatística e políticas RLS
 proxy.ts              protege as rotas e renova a sessão
 ```
+
+## Segurança
+
+- **Repositório GitHub privado.** O código, as migrations e as fotos dos jogadores não devem ficar públicos.
+- **Sem login**, a API do Supabase só entrega nome, escudo e cores do grupo (`getConfigPublica`). Todo o resto
+  (local, horário, valores, jogadores, telefones, pagamentos) exige sessão e passa pelo RLS.
+- **Cargos:** capitão não reseta, não exclui, não bloqueia e não troca o telefone do presidente nem de outro capitão.
+  Só o presidente nomeia capitães (migration `0008_seguranca.sql`).
+- **Login:** a consulta de telefone (`status_acesso`) tem limite de 20 tentativas por IP a cada 10 min.
+  Conta nova só nasce com o e-mail interno do próprio telefone.
+- **Supabase → Authentication → Rate Limits:** mantenha o limite de *sign-in* baixo (o PIN tem 6 dígitos).
+  Não ligue *Leaked password protection*: ela recusaria quase todo PIN numérico.
+- **Imagens:** foto de perfil só do bucket `avatares` (na pasta do próprio jogador) ou de `/jogadores/`; escudo só do
+  bucket `marca`, sem SVG.
+- **Cabeçalhos HTTP** (CSP, HSTS, anti-iframe, nosniff) ficam em `next.config.ts`. Se o app passar a carregar algo de
+  outro domínio, inclua o domínio na CSP.
+- Ao criar tabela ou função nova: ative RLS, crie as políticas e dê `grant execute` só para `authenticated`.

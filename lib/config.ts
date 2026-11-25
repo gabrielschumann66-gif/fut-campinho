@@ -36,25 +36,29 @@ export const CONFIG_PADRAO: Config = {
   configurado_em: null,
 }
 
+/** Parte da configuração que aparece sem login (tela de entrada, ícone, título). */
+export type ConfigPublica = Pick<Config, 'nome_grupo' | 'logo_url' | 'cor_arte'>
+
 /**
- * Configuração do grupo, com cache de 5 min compartilhado entre todas as páginas
+ * Nome, escudo e cor do grupo, lidos sem login, com cache de 5 min
  * (tag "config": quem salva a configuração chama `configAtualizada()` para limpar).
- * Lida sem login, então serve também para a tela de entrada.
+ * O banco só libera estas colunas para quem não está logado; o resto vem de getConfig (lib/dados).
  */
-export const getConfig = cache(async (): Promise<Config> => {
+export const getConfigPublica = cache(async (): Promise<ConfigPublica> => {
+  const padrao: ConfigPublica = { nome_grupo: CONFIG_PADRAO.nome_grupo, logo_url: null, cor_arte: CONFIG_PADRAO.cor_arte }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-  if (!url || !key) return CONFIG_PADRAO
+  if (!url || !key) return padrao
   try {
-    const r = await fetch(`${url}/rest/v1/config?id=eq.1&select=*`, {
+    const r = await fetch(`${url}/rest/v1/config?id=eq.1&select=nome_grupo,logo_url,cor_arte`, {
       headers: { apikey: key },
       next: { revalidate: 300, tags: ['config'] },
     })
-    if (!r.ok) return CONFIG_PADRAO
-    const [c] = (await r.json()) as Partial<Config>[]
-    return { ...CONFIG_PADRAO, ...c, valor_mensalidade: Number(c?.valor_mensalidade ?? CONFIG_PADRAO.valor_mensalidade) }
+    if (!r.ok) return padrao
+    const [c] = (await r.json()) as Partial<ConfigPublica>[]
+    return { ...padrao, ...c }
   } catch {
-    return CONFIG_PADRAO
+    return padrao
   }
 })
 
