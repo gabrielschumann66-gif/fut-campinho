@@ -39,7 +39,10 @@ export default function Carta({
   avatar,
   logo = '/escudo.svg',
   mvp = 0,
+  fixa = false,
 }: {
+  /** Sem botão de virar nem legenda (arte do story) */
+  fixa?: boolean
   avatar?: string | null
   logo?: string
   nivel: Nivel
@@ -69,14 +72,7 @@ export default function Carta({
     </div>
   )
 
-  return (
-    <div className="col" style={{ alignItems: 'center', gap: 10 }}>
-      <button
-        className="carta-btn"
-        onClick={() => setFrente((f) => !f)}
-        aria-label={frente ? 'Virar carta para ver o verso' : 'Virar carta para ver a frente'}
-        style={{ width: largura, height: altura }}
-      >
+  const corpo = (
         <div className={`fut${t.premium ? ' premium' : ''}`} style={{ width: largura, height: altura, color: t.fg }}>
           <svg viewBox="0 0 260 370" preserveAspectRatio="none" aria-hidden="true">
             <defs>
@@ -109,7 +105,7 @@ export default function Carta({
                       return (
                         <path
                           key={i}
-                          d={`M162 100 L${162 + 300 * Math.cos(a)} ${100 + 300 * Math.sin(a)} L${162 + 300 * Math.cos(a + 0.1)} ${100 + 300 * Math.sin(a + 0.1)} Z`}
+                          d={`M162 100 L${(162 + 300 * Math.cos(a)).toFixed(1)} ${(100 + 300 * Math.sin(a)).toFixed(1)} L${(162 + 300 * Math.cos(a + 0.1)).toFixed(1)} ${(100 + 300 * Math.sin(a + 0.1)).toFixed(1)} Z`}
                         />
                       )
                     })}
@@ -215,6 +211,17 @@ export default function Carta({
             </div>
           )}
         </div>
+  )
+  if (fixa) return corpo
+  return (
+    <div className="col" style={{ alignItems: 'center', gap: 10 }}>
+      <button
+        className="carta-btn"
+        onClick={() => setFrente((f) => !f)}
+        aria-label={frente ? 'Virar carta para ver o verso' : 'Virar carta para ver a frente'}
+        style={{ width: largura, height: altura }}
+      >
+        {corpo}
       </button>
       <span className="small mut">Toque na carta para virar</span>
     </div>

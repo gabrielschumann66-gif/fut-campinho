@@ -35,7 +35,6 @@ export default async function Arte({ searchParams }: { searchParams: Promise<{ r
           avatar={dados.craque.avatar}
           logo={logoDe(config)}
           grupo={config.nome_grupo}
-          fundo={config.cor_arte}
         />
       ) : (
         <div className="vazio">Nenhum craque para gerar arte ainda.</div>

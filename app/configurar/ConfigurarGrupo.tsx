@@ -6,7 +6,6 @@ import { configAtualizada } from '@/app/acoes'
 import { DIAS_SEMANA, logoDe, type Config } from '@/lib/config'
 import { linkConvite } from '@/lib/convite'
 import { createClient } from '@/lib/supabase/client'
-import { CORES_ARTE, corArte } from '@/lib/tema'
 import { CORES_TIME, brl, corHex, erroMsg, formatarTelefone, mascaraTelefone, normalizarTelefone, type Papel } from '@/lib/util'
 
 type Jog = { id: string; nome: string; nomeCompleto: string; apelido: string | null; telefone: string | null; papel: Papel; entrou: boolean }
@@ -38,7 +37,7 @@ export default function ConfigurarGrupo({
   const [nome, setNome] = useState(config.nome_grupo)
   const [logo, setLogo] = useState<string | null>(config.logo_url)
   const [enviandoLogo, setEnviandoLogo] = useState(false)
-  const [arte, setArte] = useState(() => corArte(config.cor_arte).hex)
+  const arte = config.cor_arte
   const [coletes, setColetes] = useState<string[]>(config.coletes)
   const [dia, setDia] = useState(config.dia_semana)
   const [horario, setHorario] = useState(config.horario_padrao.slice(0, 5))
@@ -66,7 +65,6 @@ export default function ConfigurarGrupo({
   const outros = useMemo(() => elenco.filter((j) => j.id !== eu.id), [elenco, eu.id])
   const filtrados = outros.filter((j) => !busca.trim() || j.nome.toLowerCase().includes(busca.trim().toLowerCase()))
   const semAcesso = outros.filter((j) => !j.entrou && j.telefone)
-  const fundoArte = corArte(arte)
 
   function ir(n: number) {
     setErro(null)
@@ -261,36 +259,6 @@ export default function ConfigurarGrupo({
                     </button>
                   )}
                 </div>
-              </div>
-              <div className="field">
-                Fundo da arte do craque (Story)
-                <div className="chips" role="radiogroup" aria-label="Cor de fundo da arte">
-                  {CORES_ARTE.map((c) => (
-                    <button
-                      key={c.hex}
-                      role="radio"
-                      aria-checked={arte === c.hex}
-                      aria-label={c.nome}
-                      title={c.nome}
-                      className="cor-bola"
-                      onClick={() => setArte(c.hex)}
-                      style={{ background: c.hex, boxShadow: arte === c.hex ? '0 0 0 3px var(--bg), 0 0 0 5px var(--yel)' : '0 0 0 1px #4A4A45' }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div
-                className="col"
-                style={{ alignSelf: 'center', width: 150, height: 266, borderRadius: 14, background: fundoArte.hex, color: fundoArte.fg, padding: 12, gap: 8, alignItems: 'center', boxShadow: '0 0 0 1px #4A4A45' }}
-                aria-label="Prévia da arte"
-              >
-                <span className="row" style={{ gap: 6 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={marca} alt="" width={30} height={30} style={{ objectFit: 'contain' }} />
-                  <span className="cond" style={{ fontSize: 13, lineHeight: 1 }}>MAN OF THE MATCH</span>
-                </span>
-                <span style={{ width: 82, height: 116, borderRadius: 8, background: 'linear-gradient(160deg, #FFF6A0, #FDE819 40%, #C99A00)' }} />
-                <span style={{ marginTop: 'auto', width: '100%', height: 34, borderRadius: 8, background: fundoArte.hex === '#0B0B0A' ? '#1C1C1A' : '#0B0B0A' }} />
               </div>
             </>
           )}
@@ -552,11 +520,6 @@ export default function ConfigurarGrupo({
                       {c}
                     </span>
                   ))}
-                </span>
-                <span className="s13 row" style={{ gap: 6 }}>
-                  <b>Arte do craque:</b>
-                  <span style={{ width: 12, height: 12, borderRadius: 6, background: fundoArte.hex, boxShadow: '0 0 0 1px #4A4A45' }} />
-                  {fundoArte.nome}
                 </span>
                 <span className="s13">
                   <b>Mensalidade:</b> R$ {brl(valor)} até o dia {vencimento}
