@@ -28,8 +28,6 @@ const W = 540
 const H = 960
 const COND = "var(--font-cond), 'Barlow Condensed', sans-serif"
 
-/** Dourado da arte: claro → ouro → sombra, com faixa de brilho */
-const OURO = 'linear-gradient(135deg, #fff4b8 0%, #e9c862 32%, #8a6410 62%, #f3d570 100%)'
 
 function Estrela({ size = 18 }: { size?: number }) {
   return (
@@ -55,7 +53,6 @@ export default function ArteStory(p: Props) {
   const [escala, setEscala] = useState(0.6)
   const [gerando, setGerando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const handle = p.grupo.normalize('NFD').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
 
   useEffect(() => {
     const el = wrap.current
@@ -88,11 +85,12 @@ export default function ArteStory(p: Props) {
     }
   }
 
-  const caixas: { icone: React.ReactNode; rotulo: string; valor: string | number; sufixo?: string }[] = [
-    { icone: <Estrela size={15} />, rotulo: 'PONTOS', valor: p.pts, sufixo: 'no dia' },
-    { icone: <Coroa size={16} cor="currentColor" />, rotulo: 'MVP', valor: `${p.titulos}×`, sufixo: p.titulos === 1 ? 'a primeira' : 'na temporada' },
-    { icone: <Barras size={14} />, rotulo: 'MÉDIA', valor: p.media, sufixo: 'pts / rodada' },
+  const caixas: { icone: React.ReactNode; rotulo: string; valor: string | number; ouro?: boolean }[] = [
+    { icone: <Estrela size={14} />, rotulo: 'PONTOS NO DIA', valor: p.pts },
+    { icone: <Coroa size={15} cor="currentColor" />, rotulo: 'VEZES CRAQUE', valor: `${p.titulos}×`, ouro: true },
+    { icone: <Barras size={13} />, rotulo: 'MÉDIA / RODADA', valor: p.media },
   ]
+  const LINHA = 'rgba(245,241,228,.11)'
 
   return (
     <div className="col gap-12">
@@ -104,7 +102,7 @@ export default function ArteStory(p: Props) {
             height: H,
             transform: `scale(${escala})`,
             transformOrigin: 'top left',
-            background: 'radial-gradient(70% 42% at 50% 47%, rgba(233,200,98,.30) 0%, rgba(138,100,16,.12) 45%, transparent 75%), linear-gradient(180deg, #0d0b07 0%, #050504 55%, #0a0805 100%)',
+            background: 'radial-gradient(60% 34% at 50% 45%, rgba(233,200,98,.16) 0%, transparent 70%), #070706',
             color: '#f5f1e4',
             position: 'relative',
             overflow: 'hidden',
@@ -112,88 +110,64 @@ export default function ArteStory(p: Props) {
             boxSizing: 'border-box',
           }}
         >
-          {/* Raios dourados saindo de trás da carta */}
           <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0 }} aria-hidden="true">
             <defs>
-              <radialGradient id={`${id}raio`} cx="270" cy="450" r="520" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#f3d570" stopOpacity=".22" />
+              <radialGradient id={`${id}raio`} cx="270" cy="430" r="480" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#f3d570" stopOpacity=".09" />
                 <stop offset="1" stopColor="#f3d570" stopOpacity="0" />
               </radialGradient>
-              <linearGradient id={`${id}ouro`} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#fff4b8" />
-                <stop offset=".3" stopColor="#e9c862" />
-                <stop offset=".55" stopColor="#9a7114" />
-                <stop offset=".75" stopColor="#f3d570" />
-                <stop offset="1" stopColor="#c99a2e" />
-              </linearGradient>
-              <linearGradient id={`${id}brilho`} x1="0" y1="0" x2="1" y2="0">
-                <stop offset=".3" stopColor="#fff" stopOpacity="0" />
-                <stop offset=".45" stopColor="#fff" stopOpacity=".7" />
-                <stop offset=".55" stopColor="#fff" stopOpacity="0" />
+              <linearGradient id={`${id}ouro`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#fff1b0" />
+                <stop offset=".55" stopColor="#e2bd55" />
+                <stop offset="1" stopColor="#a87d1c" />
               </linearGradient>
             </defs>
+
+            {/* Raios discretos atrás da carta */}
             <g fill={`url(#${id}raio)`}>
-              {Array.from({ length: 24 }, (_, i) => {
-                const a = (i * Math.PI) / 12
-                const b = a + 0.07
-                return <path key={i} d={`M270 450 L${(270 + 900 * Math.cos(a)).toFixed(1)} ${(450 + 900 * Math.sin(a)).toFixed(1)} L${(270 + 900 * Math.cos(b)).toFixed(1)} ${(450 + 900 * Math.sin(b)).toFixed(1)} Z`} />
+              {Array.from({ length: 16 }, (_, i) => {
+                const a = (i * Math.PI) / 8
+                const b = a + 0.08
+                return <path key={i} d={`M270 430 L${(270 + 900 * Math.cos(a)).toFixed(1)} ${(430 + 900 * Math.sin(a)).toFixed(1)} L${(270 + 900 * Math.cos(b)).toFixed(1)} ${(430 + 900 * Math.sin(b)).toFixed(1)} Z`} />
               })}
             </g>
+
+            {/* Quadra vista de cima: as linhas também fazem a moldura da arte */}
+            <g fill="none" stroke={LINHA} strokeWidth="1.5">
+              <rect x="28" y="28" width="484" height="904" rx="3" />
+              <line x1="28" y1="430" x2="512" y2="430" />
+              <circle cx="270" cy="430" r="118" />
+              <rect x="130" y="28" width="280" height="122" />
+              <rect x="200" y="28" width="140" height="46" />
+              <path d="M222 150 A60 60 0 0 0 318 150" />
+              <rect x="130" y="810" width="280" height="122" />
+              <rect x="200" y="886" width="140" height="46" />
+              <path d="M222 810 A60 60 0 0 1 318 810" />
+              <path d="M28 42 A14 14 0 0 0 42 28 M498 28 A14 14 0 0 0 512 42 M512 918 A14 14 0 0 0 498 932 M42 932 A14 14 0 0 0 28 918" />
+            </g>
+            <g fill={LINHA}>
+              <circle cx="270" cy="430" r="3.5" />
+              <circle cx="270" cy="114" r="3" />
+              <circle cx="270" cy="846" r="3" />
+            </g>
+
             {/* Título */}
-            <text x="270" y="178" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="78" textLength="452" lengthAdjust="spacingAndGlyphs" fill="#000" opacity=".5" transform="translate(0 4)">
-              MAN OF THE MATCH
-            </text>
-            <text x="270" y="178" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="78" textLength="452" lengthAdjust="spacingAndGlyphs" fill={`url(#${id}ouro)`}>
-              MAN OF THE MATCH
-            </text>
-            <text x="270" y="178" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="78" textLength="452" lengthAdjust="spacingAndGlyphs" fill={`url(#${id}brilho)`} opacity=".55">
+            <text x="270" y="190" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="76" textLength="430" lengthAdjust="spacingAndGlyphs" fill={`url(#${id}ouro)`}>
               MAN OF THE MATCH
             </text>
           </svg>
 
-          {/* Moldura dourada fina em volta da arte toda */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              inset: 14,
-              borderRadius: 26,
-              border: '1.5px solid transparent',
-              background: `${OURO} border-box`,
-              WebkitMask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
-              WebkitMaskComposite: 'xor',
-              maskComposite: 'exclude',
-              opacity: 0.7,
-            }}
-          />
-
           {/* Topo: escudo + rodada */}
-          <div style={{ position: 'absolute', top: 44, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+          <div style={{ position: 'absolute', top: 58, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.logo} alt="" width={40} height={40} style={{ objectFit: 'contain' }} crossOrigin="anonymous" />
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 7,
-                height: 30,
-                padding: '0 14px',
-                borderRadius: 99,
-                border: '1px solid transparent',
-                background: `linear-gradient(180deg, #1c170c, #0c0a06) padding-box, ${OURO} border-box`,
-                color: '#f3d570',
-                fontWeight: 800,
-                fontSize: 16,
-                letterSpacing: 2.5,
-              }}
-            >
-              <Coroa size={14} cor="#f3d570" />
-              CRAQUE DA RODADA {p.rodada} · {ddmm(p.data)}
+            <img src={p.logo} alt="" width={34} height={34} style={{ objectFit: 'contain' }} crossOrigin="anonymous" />
+            <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: 2, color: 'rgba(245,241,228,.7)' }}>
+              RODADA {p.rodada} · {ddmm(p.data)}
             </span>
           </div>
 
           {/* Carta */}
-          <div style={{ position: 'absolute', top: 214, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', top: 226, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
             <Carta
               fixa
               nivel={p.nivel}
@@ -215,60 +189,35 @@ export default function ArteStory(p: Props) {
             />
           </div>
 
-          {/* Uma caixa por número, com ícone */}
-          <div style={{ position: 'absolute', left: 36, right: 36, top: 680, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
-            {caixas.map((c, i) => (
+          {/* Uma caixa por número */}
+          <div style={{ position: 'absolute', left: 44, right: 44, top: 688, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+            {caixas.map((c) => (
               <div
                 key={c.rotulo}
                 style={{
-                  position: 'relative',
-                  borderRadius: 20,
-                  padding: '14px 14px 13px',
-                  border: '1.5px solid transparent',
-                  background:
-                    i === 1
-                      ? `radial-gradient(120% 90% at 30% 0%, rgba(255,244,184,.30), transparent 60%) padding-box, linear-gradient(180deg, #2a2210 0%, #120e06 100%) padding-box, ${OURO} border-box`
-                      : `radial-gradient(120% 90% at 30% 0%, rgba(255,244,184,.12), transparent 60%) padding-box, linear-gradient(180deg, #17140d 0%, #0b0a07 100%) padding-box, linear-gradient(160deg, rgba(255,244,184,.55), rgba(138,100,16,.35) 50%, rgba(243,213,112,.45)) border-box`,
-                  boxShadow: `inset 0 1px 0 rgba(255,244,184,.18)${i === 1 ? ', 0 12px 30px -10px rgba(233,200,98,.55)' : ''}`,
+                  borderRadius: 16,
+                  padding: '13px 12px 12px',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))',
+                  border: '1px solid rgba(245,241,228,.12)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 8,
+                  gap: 6,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 13,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'linear-gradient(145deg, #fff4b8, #e9c862 45%, #9a7114)',
-                      color: '#2c1f03',
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,.6)',
-                    }}
-                  >
-                    {c.icone}
-                  </span>
-                  <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: 2, color: '#e9c862' }}>{c.rotulo}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#e2bd55' }}>
+                  {c.icone}
+                  <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.8, color: 'rgba(245,241,228,.6)' }}>{c.rotulo}</span>
                 </div>
-                <span style={{ fontWeight: 900, fontSize: 50, lineHeight: 0.9, color: '#fffaf0' }}>{c.valor}</span>
-                <span style={{ fontFamily: "var(--font-body), system-ui, sans-serif", fontSize: 12, fontWeight: 600, color: 'rgba(245,241,228,.55)' }}>{c.sufixo}</span>
+                <span style={{ fontWeight: 900, fontSize: 46, lineHeight: 0.9, color: c.ouro ? '#f0cf6a' : '#fffaf0' }}>{c.valor}</span>
               </div>
             ))}
           </div>
 
-          {/* Assinatura do app, estilo Strava */}
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 44, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ width: 46, height: 1, background: 'linear-gradient(90deg, transparent, #e9c862)' }} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.logo} alt="" width={30} height={30} style={{ objectFit: 'contain' }} crossOrigin="anonymous" />
-              <span style={{ fontWeight: 900, fontSize: 24, letterSpacing: 3, color: '#fffaf0' }}>{p.grupo.toUpperCase()}</span>
-              <span style={{ width: 46, height: 1, background: 'linear-gradient(90deg, #e9c862, transparent)' }} />
-            </div>
-            <span style={{ fontWeight: 700, fontSize: 14, letterSpacing: 4, color: 'rgba(233,200,98,.75)' }}>@{handle} · NO APP DO FUT</span>
+          {/* Assinatura */}
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 58, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={p.logo} alt="" width={26} height={26} style={{ objectFit: 'contain' }} crossOrigin="anonymous" />
+            <span style={{ fontWeight: 800, fontSize: 19, letterSpacing: 1.5, color: '#fffaf0' }}>{p.grupo.toUpperCase()}</span>
           </div>
         </div>
       </div>
