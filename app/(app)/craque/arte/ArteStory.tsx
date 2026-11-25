@@ -90,7 +90,7 @@ export default function ArteStory(p: Props) {
     { icone: <Coroa size={15} cor="currentColor" />, rotulo: 'VEZES CRAQUE', valor: `${p.titulos}×`, ouro: true },
     { icone: <Barras size={13} />, rotulo: 'MÉDIA / RODADA', valor: p.media },
   ]
-  const LINHA = 'rgba(245,241,228,.11)'
+  const LINHA = 'rgba(245,241,228,.26)'
 
   return (
     <div className="col gap-12">
@@ -133,7 +133,7 @@ export default function ArteStory(p: Props) {
             </g>
 
             {/* Quadra vista de cima: as linhas também fazem a moldura da arte */}
-            <g fill="none" stroke={LINHA} strokeWidth="1.5">
+            <g fill="none" stroke={LINHA} strokeWidth="2">
               <rect x="28" y="28" width="484" height="904" rx="3" />
               <line x1="28" y1="430" x2="512" y2="430" />
               <circle cx="270" cy="430" r="118" />
@@ -161,8 +161,10 @@ export default function ArteStory(p: Props) {
           <div style={{ position: 'absolute', top: 58, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.logo} alt="" width={34} height={34} style={{ objectFit: 'contain' }} crossOrigin="anonymous" />
-            <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: 2, color: 'rgba(245,241,228,.7)' }}>
-              RODADA {p.rodada} · {ddmm(p.data)}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 18, letterSpacing: 2, color: '#f0cf6a' }}>
+              <Coroa size={15} cor="#f0cf6a" />
+              CRAQUE DA RODADA {p.rodada}
+              <span style={{ color: 'rgba(245,241,228,.6)', fontWeight: 700 }}>· {ddmm(p.data)}</span>
             </span>
           </div>
 
