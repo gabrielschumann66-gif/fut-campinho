@@ -90,7 +90,7 @@ export default function ArteStory(p: Props) {
     { icone: <Coroa size={15} cor="currentColor" />, rotulo: 'VEZES CRAQUE', valor: `${p.titulos}×`, ouro: true },
     { icone: <Barras size={13} />, rotulo: 'MÉDIA / RODADA', valor: p.media },
   ]
-  const LINHA = 'rgba(245,241,228,.26)'
+  const LINHA = '#46433b'
 
   return (
     <div className="col gap-12">
@@ -116,11 +116,21 @@ export default function ArteStory(p: Props) {
                 <stop offset="0" stopColor="#f3d570" stopOpacity=".09" />
                 <stop offset="1" stopColor="#f3d570" stopOpacity="0" />
               </radialGradient>
-              <linearGradient id={`${id}ouro`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#fff1b0" />
-                <stop offset=".55" stopColor="#e2bd55" />
-                <stop offset="1" stopColor="#a87d1c" />
+              <linearGradient id={`${id}ouro`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#fff4b8" />
+                <stop offset=".3" stopColor="#e9c862" />
+                <stop offset=".55" stopColor="#9a7114" />
+                <stop offset=".75" stopColor="#f3d570" />
+                <stop offset="1" stopColor="#c99a2e" />
               </linearGradient>
+              <linearGradient id={`${id}brilho`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset=".3" stopColor="#fff" stopOpacity="0" />
+                <stop offset=".45" stopColor="#fff" stopOpacity=".7" />
+                <stop offset=".55" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+              <filter id={`${id}luz`} x="-20%" y="-60%" width="140%" height="220%">
+                <feGaussianBlur stdDeviation="14" />
+              </filter>
             </defs>
 
             {/* Raios discretos atrás da carta */}
@@ -137,22 +147,30 @@ export default function ArteStory(p: Props) {
               <rect x="28" y="28" width="484" height="904" rx="3" />
               <line x1="28" y1="430" x2="512" y2="430" />
               <circle cx="270" cy="430" r="118" />
-              <rect x="130" y="28" width="280" height="122" />
-              <rect x="200" y="28" width="140" height="46" />
-              <path d="M222 150 A60 60 0 0 0 318 150" />
-              <rect x="130" y="810" width="280" height="122" />
-              <rect x="200" y="886" width="140" height="46" />
-              <path d="M222 810 A60 60 0 0 1 318 810" />
+              <path d="M140 28 V112 H400 V28" />
+              <path d="M206 28 V60 H334 V28" />
+              <path d="M243.2 112 A36 36 0 0 0 296.8 112" />
+              <path d="M140 932 V848 H400 V932" />
+              <path d="M206 932 V900 H334 V932" />
+              <path d="M243.2 848 A36 36 0 0 1 296.8 848" />
               <path d="M28 42 A14 14 0 0 0 42 28 M498 28 A14 14 0 0 0 512 42 M512 918 A14 14 0 0 0 498 932 M42 932 A14 14 0 0 0 28 918" />
             </g>
             <g fill={LINHA}>
               <circle cx="270" cy="430" r="3.5" />
-              <circle cx="270" cy="114" r="3" />
-              <circle cx="270" cy="846" r="3" />
             </g>
 
-            {/* Título */}
+
+            {/* Luz dourada suave atrás do título */}
+            <text x="270" y="190" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="76" textLength="430" lengthAdjust="spacingAndGlyphs" filter={`url(#${id}luz)`} opacity=".55" fill="#e9c862">
+              MAN OF THE MATCH
+            </text>
+            <text x="270" y="190" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="76" textLength="430" lengthAdjust="spacingAndGlyphs" opacity=".5" transform="translate(0 4)" fill="#000">
+              MAN OF THE MATCH
+            </text>
             <text x="270" y="190" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="76" textLength="430" lengthAdjust="spacingAndGlyphs" fill={`url(#${id}ouro)`}>
+              MAN OF THE MATCH
+            </text>
+            <text x="270" y="190" textAnchor="middle" fontFamily={COND} fontWeight={900} fontSize="76" textLength="430" lengthAdjust="spacingAndGlyphs" opacity=".55" fill={`url(#${id}brilho)`}>
               MAN OF THE MATCH
             </text>
           </svg>
@@ -216,7 +234,7 @@ export default function ArteStory(p: Props) {
           </div>
 
           {/* Assinatura */}
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 58, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 73, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.logo} alt="" width={26} height={26} style={{ objectFit: 'contain' }} crossOrigin="anonymous" />
             <span style={{ fontWeight: 800, fontSize: 19, letterSpacing: 1.5, color: '#fffaf0' }}>{p.grupo.toUpperCase()}</span>
