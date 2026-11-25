@@ -29,8 +29,10 @@ rodada encerrada (desempate: gols, assistências, vitórias). Carta: Bronze até
 1. Crie um projeto em <https://supabase.com> (região **South America (São Paulo)**).
 2. **SQL Editor → New query**: cole todo o conteúdo de `supabase/migrations/0001_init.sql` e clique em **Run**.
 3. **Authentication → URL Configuration**:
-   - Site URL: `https://fut.gabrielschumann.com.br`
-   - Redirect URLs: `https://fut.gabrielschumann.com.br/**` e `http://localhost:3000/**`
+   - Site URL: `https://futcampinho.com.br`
+   - Redirect URLs: `https://futcampinho.com.br/**` e `http://localhost:3000/**`
+   - (O login é por celular + PIN com senha, sem link por e-mail; o e-mail interno `<telefone>@fut.gabrielschumann.com.br`
+     é só um identificador e não deve mudar.)
 4. **Authentication → Sign In / Providers → Email**: o e-mail padrão do Supabase envia poucas
    mensagens por hora. Para um grupo pequeno, você pode desligar **Confirm email**, ou configurar um SMTP próprio.
 5. **Project Settings → API Keys**: copie a *Project URL* e a *Publishable key*.
@@ -49,10 +51,12 @@ npm run dev                  # http://localhost:3000
 4. **Deploy**.
 
 ### 4. Domínio
-1. Na Vercel: **Project → Settings → Domains → Add** `fut.gabrielschumann.com.br`.
-2. No painel DNS da sua hospedagem (zona `gabrielschumann.com.br`): remova o registro **A** atual de `fut`
-   e crie um **CNAME** `fut` apontando para o valor que a Vercel mostrar.
-3. Aguarde a propagação; o HTTPS é emitido automaticamente.
+O app responde em **https://futcampinho.com.br** (registrado no Registro.br). Projeto da Vercel: `fut-campinho-kac5`.
+1. Na Vercel: **Settings → Domains** tem `futcampinho.com.br` e `www.futcampinho.com.br` (este redireciona para o primeiro).
+2. No Registro.br (DNS do Registro.br, **modo avançado → Configurar zona DNS**):
+   - **A** `futcampinho.com.br` → `216.198.79.1` e outro **A** → `64.29.17.1`
+   - **CNAME** `www` → `d18708657c96d022.vercel-dns-017.com`
+3. O HTTPS é emitido automaticamente pela Vercel depois que o DNS propaga.
 
 ### 5. Primeiro acesso
 1. Abra o app e crie sua conta → você vira **presidente**.
