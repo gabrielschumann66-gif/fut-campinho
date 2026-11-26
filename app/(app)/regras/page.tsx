@@ -39,7 +39,7 @@ export default async function Regras() {
           <div style={{ background: 'var(--yel)', color: 'var(--bg)', borderRadius: 20, padding: 14 }} className="col gap-4">
             <span className="cond" style={{ fontSize: 46, lineHeight: 0.95 }}>{config.duracao_min} MIN</span>
             <span className="s13" style={{ fontWeight: 600 }}>
-              {config.gols_limite ? `ou ${config.gols_limite} ${config.gols_limite === 1 ? 'gol' : 'gols'}, o que vier primeiro` : 'por jogo'}
+              {config.gols_limite ? `ou ${config.gols_limite} ${config.gols_limite === 1 ? 'gol' : 'gols'}, o que vier primeiro` : 'por jogo, sem limite de gols'}
             </span>
           </div>
           <div className="card col gap-4" style={{ borderRadius: 20, padding: 14 }}>
@@ -48,7 +48,7 @@ export default async function Regras() {
           </div>
           <div className="card col gap-4" style={{ borderRadius: 20, padding: 14 }}>
             <span className="cond org" style={{ fontSize: 46, lineHeight: 0.95 }}>{config.max_vitorias}×</span>
-            <span className="s13 mut">máx. de vitórias seguidas em campo</span>
+            <span className="s13 mut">máx. de partidas seguidas em campo</span>
           </div>
           <div className="card col gap-4" style={{ borderRadius: 20, padding: 14 }}>
             <span className="cond" style={{ fontSize: 46, lineHeight: 0.95 }}>DIA {config.dia_vencimento}</span>

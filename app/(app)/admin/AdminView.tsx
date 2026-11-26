@@ -374,7 +374,7 @@ export default function AdminView({
               <input className="input" type="number" min={1} value={cfg.duracao_min} onChange={(e) => setCfg({ ...cfg, duracao_min: Number(e.target.value) })} required />
             </label>
             <label className="field">
-              Ou até quantos gols
+              Limite de gols (0 = sem limite)
               <input className="input" type="number" min={0} value={cfg.gols_limite} onChange={(e) => setCfg({ ...cfg, gols_limite: Number(e.target.value) })} required />
             </label>
             <label className="field">
@@ -382,7 +382,7 @@ export default function AdminView({
               <input className="input" value={cfg.formato} onChange={(e) => setCfg({ ...cfg, formato: e.target.value })} required />
             </label>
             <label className="field">
-              Máx. vitórias seguidas
+              Máx. de partidas seguidas
               <input className="input" type="number" min={0} value={cfg.max_vitorias} onChange={(e) => setCfg({ ...cfg, max_vitorias: Number(e.target.value) })} required />
             </label>
           </div>
