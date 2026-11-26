@@ -32,6 +32,8 @@ export default function EscolherAvatar({
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const foto = ehFoto(valor)
+  // A foto que a pessoa já tinha (ou acabou de subir) continua como opção, para não sumir ao tocar numa cor
+  const [fotoGuardada, setFotoGuardada] = useState<string | null>(foto ? valor : null)
 
   async function enviar(f?: File) {
     if (!f) return
@@ -44,7 +46,9 @@ export default function EscolherAvatar({
       const supabase = createClient()
       const { error } = await supabase.storage.from('avatares').upload(caminho, blob, { contentType: 'image/jpeg', upsert: true })
       if (error) throw error
-      onChange(supabase.storage.from('avatares').getPublicUrl(caminho).data.publicUrl)
+      const url = supabase.storage.from('avatares').getPublicUrl(caminho).data.publicUrl
+      setFotoGuardada(url)
+      onChange(url)
     } catch (e) {
       setErro(erroMsg(e))
     } finally {
@@ -68,8 +72,19 @@ export default function EscolherAvatar({
       </div>
       {erro && <span className="erro" role="alert">{erro}</span>}
       <div className="field">
-        Ou escolha a cor das suas iniciais
-        <div className="onb-avatares" role="radiogroup" aria-label="Cor das iniciais">
+        {fotoGuardada ? 'Sua foto ou as iniciais coloridas' : 'Ou escolha a cor das suas iniciais'}
+        <div className="onb-avatares" role="radiogroup" aria-label="Foto ou cor das iniciais">
+          {fotoGuardada && (
+            <button
+              role="radio"
+              aria-checked={valor === fotoGuardada}
+              aria-label="Minha foto"
+              className={`onb-avatar${valor === fotoGuardada ? ' on' : ''}`}
+              onClick={() => onChange(fotoGuardada)}
+            >
+              <Avatar id={fotoGuardada} nome={nome} size={60} />
+            </button>
+          )}
           {IDS_TEMA.map((t) => {
             const on = valor === `tema:${t}`
             return (
