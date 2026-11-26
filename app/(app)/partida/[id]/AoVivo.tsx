@@ -22,6 +22,17 @@ type Partida = {
 type Jogador = { id: string; lado: Lado; nome: string }
 type Gol = { id: number; lado: Lado; autorId: string; assistId: string | null; minuto: number }
 type Defesa = { id: number; lado: Lado; jogadorId: string; minuto: number }
+type Infracao = { id: number; lado: Lado; jogadorId: string; tipo: 'sebo' | 'mao'; minuto: number }
+type Modo = 'gol' | 'defesa' | 'sebo' | 'mao'
+
+const MODOS: { id: Modo; rotulo: string; pts: number }[] = [
+  { id: 'gol', rotulo: 'Gol', pts: PONTOS.gol },
+  { id: 'defesa', rotulo: 'Defesa', pts: PONTOS.defesa },
+  { id: 'sebo', rotulo: 'Sebo', pts: PONTOS.sebo },
+  { id: 'mao', rotulo: 'Mão', pts: PONTOS.mao },
+]
+const INFRACAO_NOME = { sebo: 'Ação de sebo', mao: 'Mão proposital' } as const
+const sinal = (n: number) => (n > 0 ? `+${n}` : `−${Math.abs(n)}`)
 
 const mmss = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -36,6 +47,7 @@ export default function AoVivo({
   elenco,
   gols,
   defesas,
+  infracoes,
   vitorias,
   podeEditar,
   lancar,
@@ -46,6 +58,7 @@ export default function AoVivo({
   elenco: { id: string; nome: string }[]
   gols: Gol[]
   defesas: Defesa[]
+  infracoes: Infracao[]
   vitorias: Record<string, number>
   podeEditar: boolean
   lancar: boolean
@@ -54,7 +67,7 @@ export default function AoVivo({
   const aoVivo = partida.status === 'ao_vivo'
   const [corrigindo, setCorrigindo] = useState(false)
   const [autor, setAutor] = useState<Jogador | null>(null)
-  const [modo, setModo] = useState<'gol' | 'defesa'>('gol')
+  const [modo, setModo] = useState<Modo>('gol')
   const [adicionarEm, setAdicionarEm] = useState<Lado | null>(null)
   const [agora, setAgora] = useState(() => Date.now())
   const [ocupado, setOcupado] = useState(false)
@@ -74,6 +87,7 @@ export default function AoVivo({
     const canal = supabase
       .channel(`partida-${partida.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gols', filter: `partida_id=eq.${partida.id}` }, () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'infracoes', filter: `partida_id=eq.${partida.id}` }, () => router.refresh())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'defesas', filter: `partida_id=eq.${partida.id}` }, () => router.refresh())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'partidas', filter: `id=eq.${partida.id}` }, () => router.refresh())
       .subscribe()
@@ -118,8 +132,28 @@ export default function AoVivo({
     await rodar(() => createClient().from('defesas').delete().eq('id', d.id))
   }
 
+  async function registrarInfracao(j: Jogador, tipo: 'sebo' | 'mao') {
+    const minuto = lancar || !aoVivo ? 1 : Math.max(1, Math.ceil(decorrido / 60000))
+    await rodar(() => createClient().from('infracoes').insert({ partida_id: partida.id, lado: j.lado, jogador_id: j.id, tipo, minuto }))
+  }
+
+  async function apagarInfracao(x: Infracao) {
+    if (!confirm(`Apagar ${INFRACAO_NOME[x.tipo].toLowerCase()} de ${nome(x.jogadorId)}?`)) return
+    await rodar(() => createClient().from('infracoes').delete().eq('id', x.id))
+  }
+
+  function tocar(j: Jogador) {
+    if (modo === 'gol') setAutor(j)
+    else if (modo === 'defesa') registrarDefesa(j)
+    else registrarInfracao(j, modo)
+  }
+
   async function tirar(j: Jogador) {
-    if (gols.some((g) => g.autorId === j.id || g.assistId === j.id) || defesas.some((d) => d.jogadorId === j.id)) {
+    if (
+      gols.some((g) => g.autorId === j.id || g.assistId === j.id) ||
+      defesas.some((d) => d.jogadorId === j.id) ||
+      infracoes.some((x) => x.jogadorId === j.id)
+    ) {
       setAutor(null)
       return setErro(`${j.nome} tem lance neste jogo. Apague o lance antes de tirar do time.`)
     }
@@ -210,16 +244,19 @@ export default function AoVivo({
           const g = gols.filter((x) => x.autorId === j.id).length
           const a = gols.filter((x) => x.assistId === j.id).length
           const d = defesas.filter((x) => x.jogadorId === j.id).length
+          const s = infracoes.filter((x) => x.jogadorId === j.id && x.tipo === 'sebo').length
+          const m = infracoes.filter((x) => x.jogadorId === j.id && x.tipo === 'mao').length
+          const resumo = [g && `${g}G`, a && `${a}A`, d && `${d}D`, s && `${s} sebo`, m && `${m} mão`].filter(Boolean).join(' · ')
           return (
             <button
               key={j.id}
-              className={`jog-btn${modo === 'defesa' ? ' defesa' : ''}`}
+              className={`jog-btn${modo === 'defesa' ? ' defesa' : modo === 'sebo' || modo === 'mao' ? ' falta' : ''}`}
               disabled={ocupado}
-              onClick={() => (modo === 'gol' ? setAutor(j) : registrarDefesa(j))}
+              onClick={() => tocar(j)}
             >
               <span className="bold ellipsis" style={{ fontSize: 14, maxWidth: '100%' }}>{j.nome}</span>
               <span className="mut" style={{ fontSize: 11 }}>
-                {g || a || d ? [g && `${g}G`, a && `${a}A`, d && `${d}D`].filter(Boolean).join(' · ') : modo === 'gol' ? 'tocar = gol' : 'tocar = defesa'}
+                {resumo || `tocar = ${MODOS.find((x) => x.id === modo)!.rotulo.toLowerCase()}`}
               </span>
             </button>
           )
@@ -289,21 +326,39 @@ export default function AoVivo({
       {editavel && (
         <>
           <div className="seg" role="tablist" aria-label="O que marcar">
-            <button role="tab" aria-selected={modo === 'gol'} className={modo === 'gol' ? 'on' : ''} onClick={() => setModo('gol')}>
-              Gol (+{PONTOS.gol})
-            </button>
-            <button role="tab" aria-selected={modo === 'defesa'} className={modo === 'defesa' ? 'on' : ''} onClick={() => setModo('defesa')}>
-              Defesa (+{PONTOS.defesa})
-            </button>
+            {MODOS.map((x) => (
+              <button
+                key={x.id}
+                role="tab"
+                aria-selected={modo === x.id}
+                className={`${modo === x.id ? 'on' : ''}${x.pts < 0 ? ' neg' : ''}`}
+                onClick={() => {
+                  setAutor(null)
+                  setModo(x.id)
+                }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.1, height: 52 }}
+              >
+                <span>{x.rotulo}</span>
+                <span style={{ fontSize: 12 }}>{sinal(x.pts)}</span>
+              </button>
+            ))}
           </div>
           <div className="passo">
             {modo === 'gol' ? (
               <>
                 <b>{autor ? 2 : 1}</b> {autor ? 'Quem deu a assistência?' : 'Toque em quem fez o gol'}
               </>
-            ) : (
+            ) : modo === 'defesa' ? (
               <>
                 <b>1</b> Toque em quem desarmou, cortou ou defendeu. Cada toque vale uma ação.
+              </>
+            ) : modo === 'sebo' ? (
+              <>
+                <b>!</b> Toque em quem fez a ação de sebo. Tira {Math.abs(PONTOS.sebo)} pontos.
+              </>
+            ) : (
+              <>
+                <b>!</b> Toque em quem pôs a mão na bola de propósito. Tira {Math.abs(PONTOS.mao)} pontos e fica 2 minutos fora.
               </>
             )}
           </div>
@@ -359,6 +414,30 @@ export default function AoVivo({
               </div>
               {editavel && (
                 <button className="icon-btn" style={{ width: 36, height: 36 }} aria-label={`Apagar defesa de ${nome(d.jogadorId)}`} onClick={() => apagarDefesa(d)} disabled={ocupado}>
+                  <IconLixo />
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
+
+      {infracoes.length > 0 && (
+        <section className="col gap-8">
+          <h2 className="h2" style={{ fontSize: 18 }}>INFRAÇÕES</h2>
+          {infracoes.map((x) => (
+            <div key={x.id} className="item">
+              <span style={{ width: 10, height: 10, borderRadius: 5, background: corHex(cor(x.lado)), boxShadow: '0 0 0 1px #4A4A45', flexShrink: 0 }} />
+              <div className="col flex-1" style={{ minWidth: 0 }}>
+                <span className="bold ellipsis" style={{ fontSize: 14 }}>
+                  {INFRACAO_NOME[x.tipo]} · {nome(x.jogadorId)}
+                </span>
+                <span className="small ellipsis" style={{ color: 'var(--neg)' }}>
+                  {cor(x.lado)} · {sinal(PONTOS[x.tipo])} pts{x.tipo === 'mao' ? ' · 2 min fora' : ''}
+                </span>
+              </div>
+              {editavel && (
+                <button className="icon-btn" style={{ width: 36, height: 36 }} aria-label={`Apagar infração de ${nome(x.jogadorId)}`} onClick={() => apagarInfracao(x)} disabled={ocupado}>
                   <IconLixo />
                 </button>
               )}

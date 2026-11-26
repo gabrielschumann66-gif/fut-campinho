@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getConfig, getContexto } from '@/lib/dados'
 import { nomeExibicao, precisaOnboarding, type Perfil } from '@/lib/util'
 import ConfigurarGrupo from './ConfigurarGrupo'
+import ExigirApp from '@/components/ExigirApp'
 
 export default async function Configurar() {
   const [{ supabase, perfil }, config] = await Promise.all([getContexto(), getConfig()])
@@ -18,5 +19,9 @@ export default async function Configurar() {
     entrou: !!p.user_id,
   }))
 
-  return <ConfigurarGrupo config={config} eu={{ id: perfil.id, onboarding: !precisaOnboarding(perfil) }} elenco={elenco} />
+  return (
+    <ExigirApp grupo={config.nome_grupo}>
+      <ConfigurarGrupo config={config} eu={{ id: perfil.id, onboarding: !precisaOnboarding(perfil) }} elenco={elenco} />
+    </ExigirApp>
+  )
 }

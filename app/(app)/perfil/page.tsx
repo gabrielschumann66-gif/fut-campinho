@@ -61,7 +61,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
   const ultimas = rodadas.slice(-8)
 
   // Últimos lances
-  const [{ data: gols }, { data: participacoes }, { data: defesas }] = await Promise.all([
+  const [{ data: gols }, { data: participacoes }, { data: defesas }, { data: infracoes }] = await Promise.all([
     supabase
       .from('gols')
       .select('id, partida_id, lado, autor_id, assist_id, autor:profiles!gols_autor_id_fkey(nome, apelido), assist:profiles!gols_assist_id_fkey(nome, apelido), partidas(numero, cor_a, cor_b, rodadas(numero))')
@@ -70,6 +70,7 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
       .limit(8),
     supabase.from('partida_jogadores').select('partida_id, lado').eq('jogador_id', alvoId).order('partida_id', { ascending: false }).limit(8),
     supabase.from('defesas').select('id, partida_id, partidas(numero, rodadas(numero))').eq('jogador_id', alvoId).order('id', { ascending: false }).limit(8),
+    supabase.from('infracoes').select('id, partida_id, tipo, partidas(numero, rodadas(numero))').eq('jogador_id', alvoId).order('id', { ascending: false }).limit(8),
   ])
   const idsPartidas = (participacoes ?? []).map((p) => p.partida_id)
   const { data: placares } = idsPartidas.length
@@ -124,6 +125,16 @@ export default async function PerfilPage({ searchParams }: { searchParams: Promi
     lances.push({
       chave: `d${d.id}`, ordem: d.partida_id * 10 + 1, sigla: 'DEF', titulo: 'Ação de defesa',
       sub: d.partidas ? `R${d.partidas.rodadas?.numero ?? '?'} · Jogo ${d.partidas.numero}` : '', pts: `+${PONTOS.defesa}`, bg: '#22A355', fg: '#0B0B0A',
+    })
+  }
+  for (const x of (infracoes ?? []) as unknown as {
+    id: number; partida_id: number; tipo: 'sebo' | 'mao'; partidas: { numero: number; rodadas: { numero: number } | null } | null
+  }[]) {
+    lances.push({
+      chave: `i${x.id}`, ordem: x.partida_id * 10, sigla: x.tipo === 'mao' ? 'MÃO' : 'SEB',
+      titulo: x.tipo === 'mao' ? 'Mão proposital' : 'Ação de sebo',
+      sub: x.partidas ? `R${x.partidas.rodadas?.numero ?? '?'} · Jogo ${x.partidas.numero}` : '',
+      pts: `−${Math.abs(PONTOS[x.tipo])}`, bg: '#D93636', fg: '#FFFFFF',
     })
   }
   lances.sort((a, b) => b.ordem - a.ordem)

@@ -11,6 +11,7 @@
   --yel-soft: #24220c;
   --yel-line: #4a4612;
   --org: #fd6201;
+  --neg: #ff6b6b;
   --org-soft: #2e1606;
   --ok: #3ddc84;
   --red: #ff4d3d;
@@ -352,6 +353,9 @@ textarea.input { height: auto; min-height: 96px; padding: 12px 14px; line-height
 }
 .jog-btn.on { border-color: var(--yel); background: #3a3410; }
 .jog-btn.defesa { border-color: #1f6b3d; background: #10241a; }
+.jog-btn.falta { border-color: #7a2323; background: #2a1010; }
+.seg button.neg { color: #ff8f8f; }
+.seg button.neg.on { background: #d93636; color: #fff; box-shadow: none; }
 .disp-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; align-items: center; padding: 6px 6px 6px 12px; border-radius: 16px; }
 .disp-row .btn { height: 40px; padding: 0 10px; font-size: 13px; }
 .sheet-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
@@ -374,3 +378,6 @@ textarea.input { height: auto; min-height: 96px; padding: 12px 14px; line-height
 }
 .ouro-txt { background: linear-gradient(90deg, #fff4b8, #e9c862 50%, #f3d570); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .ouro-txt svg { flex-shrink: 0; }
+
+/* Instalar o app */
+.onb-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 14px; background: var(--yel); color: var(--bg); font-weight: 800; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }

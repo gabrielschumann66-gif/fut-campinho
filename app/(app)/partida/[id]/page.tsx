@@ -22,9 +22,10 @@ export default async function PartidaAoVivo({
   if (!partida) notFound()
 
   const admin = isAdmin(perfil.papel)
-  const [{ data: gols }, { data: defesas }, { data: placares }, { data: elenco }] = await Promise.all([
+  const [{ data: gols }, { data: defesas }, { data: infracoes }, { data: placares }, { data: elenco }] = await Promise.all([
     supabase.from('gols').select('*').eq('partida_id', partida.id).order('id', { ascending: false }),
     supabase.from('defesas').select('*').eq('partida_id', partida.id).order('id', { ascending: false }),
+    supabase.from('infracoes').select('*').eq('partida_id', partida.id).order('id', { ascending: false }),
     supabase.from('v_partida_placar').select('*').eq('rodada_id', partida.rodada_id).eq('status', 'encerrada'),
     admin ? supabase.from('profiles').select('*').eq('ativo', true).order('nome') : Promise.resolve({ data: [] as Perfil[] }),
   ])
@@ -79,6 +80,7 @@ export default async function PartidaAoVivo({
       elenco={((elenco ?? []) as Perfil[]).map((p) => ({ id: p.id, nome: nomeExibicao(p) }))}
       gols={(gols ?? []).map((g) => ({ id: g.id, lado: g.lado, autorId: g.autor_id, assistId: g.assist_id, minuto: g.minuto }))}
       defesas={(defesas ?? []).map((d) => ({ id: d.id, lado: d.lado, jogadorId: d.jogador_id, minuto: d.minuto }))}
+      infracoes={(infracoes ?? []).map((x) => ({ id: x.id, lado: x.lado, jogadorId: x.jogador_id, tipo: x.tipo, minuto: x.minuto }))}
       vitorias={vitorias}
       podeEditar={admin}
       lancar={modo === 'lancar'}

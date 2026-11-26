@@ -27,6 +27,8 @@ export type Stats = {
   assist: number
   pts: number
   defesas?: number
+  sebo?: number
+  mao?: number
   rodadas?: number
   avatar?: string | null
 }
@@ -55,7 +57,7 @@ export const iniciais = (nome: string) =>
 export const primeiroNome = (nome: string) => nome.split(/\s+/)[0] ?? nome
 
 /** Pontuação de cada lance (igual à view v_stats_rodada no banco). */
-export const PONTOS = { vitoria: 4, empate: 2, gol: 8, assist: 5, defesa: 2 } as const
+export const PONTOS = { vitoria: 4, empate: 2, gol: 8, assist: 5, defesa: 2, sebo: -2, mao: -5 } as const
 
 /** Faixas da carta do craque pelos pontos na rodada. */
 export const FAIXA_RODADA = { prata: 30, ouro: 60 } as const
@@ -101,8 +103,14 @@ export const hhmm = (t: string) => t.slice(0, 5).replace(':', 'h')
 export const fmt1 = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 export const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
-export const pontosDe = (s: Pick<Stats, 'v' | 'e' | 'gols' | 'assist'> & { defesas?: number }) =>
-  s.v * PONTOS.vitoria + s.e * PONTOS.empate + s.gols * PONTOS.gol + s.assist * PONTOS.assist + (s.defesas ?? 0) * PONTOS.defesa
+export const pontosDe = (s: Pick<Stats, 'v' | 'e' | 'gols' | 'assist' | 'defesas' | 'sebo' | 'mao'>) =>
+  s.v * PONTOS.vitoria +
+  s.e * PONTOS.empate +
+  s.gols * PONTOS.gol +
+  s.assist * PONTOS.assist +
+  (s.defesas ?? 0) * PONTOS.defesa +
+  (s.sebo ?? 0) * PONTOS.sebo +
+  (s.mao ?? 0) * PONTOS.mao
 
 export const ordenarRanking = <T extends Stats>(lista: T[]) =>
   [...lista].sort((a, b) => b.pts - a.pts || b.v - a.v || b.gols - a.gols || a.nome.localeCompare(b.nome))

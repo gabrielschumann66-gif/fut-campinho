@@ -355,7 +355,7 @@ export default function Onboarding({ rever, perfil, grupo, eu, craque, totalJoga
                 'MARQUE OS LANCES',
                 <>
                   No modo <b>Gol</b>, toque em quem marcou e depois em quem deu a assistência. No modo <b>Defesa</b>, cada toque registra um
-                  desarme, corte ou defesa do goleiro. Errou? Apague o lance na lista. Todo mundo vê o placar na hora.
+                  desarme, corte ou defesa do goleiro. Em <b>Sebo</b> e <b>Mão</b>, o toque tira pontos de quem cometeu. Errou? Apague o lance na lista. Todo mundo vê o placar na hora.
                 </>,
               )}
             </>

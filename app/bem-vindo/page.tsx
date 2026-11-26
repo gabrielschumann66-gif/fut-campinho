@@ -3,6 +3,7 @@ import { getConfig, getContexto, temporadaAtual } from '@/lib/dados'
 import { diaSemanaNome, logoDe } from '@/lib/config'
 import { nomeExibicao, ordenarRanking, overall, type Stats } from '@/lib/util'
 import Onboarding from './Onboarding'
+import ExigirApp from '@/components/ExigirApp'
 
 export default async function BemVindo({ searchParams }: { searchParams: Promise<{ rever?: string }> }) {
   const { rever } = await searchParams
@@ -18,6 +19,7 @@ export default async function BemVindo({ searchParams }: { searchParams: Promise
   const eu = pos >= 0 ? lista[pos] : null
 
   return (
+    <ExigirApp grupo={config.nome_grupo}>
     <Onboarding
       rever={rever === '1'}
       perfil={{
@@ -48,5 +50,6 @@ export default async function BemVindo({ searchParams }: { searchParams: Promise
       craque={craque ? { nome: craque.nome, pts: craque.pts, rodada: craque.numero, avatar: craque.avatar } : null}
       totalJogadores={lista.length}
     />
+    </ExigirApp>
   )
 }
